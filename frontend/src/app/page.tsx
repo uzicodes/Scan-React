@@ -1,65 +1,146 @@
-import Image from "next/image";
+import { Zap, Shield, Cpu } from 'lucide-react';
+import ScanForm from './components/ScanForm';
+import FeatureCard from './components/FeatureCard';
+
+const features = [
+  {
+    icon: Zap,
+    title: 'Instant Diagnostics',
+    description:
+      'Get a comprehensive code quality report in seconds. No local setup, no CLI to install — just paste your URL and go.',
+  },
+  {
+    icon: Cpu,
+    title: 'React Compiler Ready',
+    description:
+      'Verify whether your codebase meets the requirements for automatic optimization with the React Compiler.',
+  },
+  {
+    icon: Shield,
+    title: 'Security Focused',
+    description:
+      'Fully stateless analysis with zero code storage. Your source code is never persisted — privacy by design.',
+  },
+] as const;
 
 export default function Home() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <main className="relative flex flex-col items-center min-h-screen overflow-hidden">
+      {/* ---- Background layers ---- */}
+      <div className="fixed inset-0 bg-grid-pattern pointer-events-none" />
+      <div className="fixed inset-0 bg-radial-glow pointer-events-none" />
+
+      {/* ---- Hero Section ---- */}
+      <section
+        id="hero-section"
+        className="relative z-10 flex flex-col items-center w-full max-w-5xl mx-auto px-6 pt-28 pb-20 sm:pt-36 sm:pb-28"
+      >
+        {/* Badge */}
+        <div className="animate-fade-in-up mb-8">
+          <span
+            className="
+              inline-flex items-center gap-2 px-4 py-1.5
+              rounded-full text-xs font-medium
+              bg-violet-500/10 text-violet-300
+              border border-violet-500/20
+              backdrop-blur-sm
+            "
+          >
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500" />
+            </span>
+            Open-Source React Analyzer
+          </span>
+        </div>
+
+        {/* Heading */}
+        <h1
+          className="
+            animate-fade-in-up-delay-1
+            text-4xl sm:text-5xl md:text-6xl lg:text-7xl
+            font-bold tracking-tight text-center
+            leading-[1.1] max-w-4xl
+            text-gradient
+          "
+        >
+          Analyze your React codebase in seconds.
+        </h1>
+
+        {/* Sub-headline */}
+        <p
+          className="
+            animate-fade-in-up-delay-2
+            mt-6 text-base sm:text-lg md:text-xl
+            text-zinc-400 text-center
+            max-w-2xl leading-relaxed
+          "
+        >
+          Automated static analysis and compiler&#8209;readiness checks for any
+          public GitHub repository. Ship&nbsp;faster, ship&nbsp;safer.
+        </p>
+
+        {/* Scan form */}
+        <div className="mt-12 w-full">
+          <ScanForm />
+        </div>
+      </section>
+
+      {/* ---- Divider shimmer ---- */}
+      <div className="relative z-10 w-full max-w-3xl mx-auto px-6">
+        <div className="h-px w-full animate-shimmer rounded-full" />
+      </div>
+
+      {/* ---- Features Grid ---- */}
+      <section
+        id="features-section"
+        className="relative z-10 w-full max-w-5xl mx-auto px-6 py-20 sm:py-28"
+      >
+        <div className="text-center mb-14 animate-fade-in-up-delay-3">
+          <h2 className="text-2xl sm:text-3xl font-bold text-zinc-100 mb-3">
+            Built for Modern React
+          </h2>
+          <p className="text-zinc-400 text-base max-w-xl mx-auto">
+            Everything you need to audit, optimize, and future-proof your React
+            applications.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+          {features.map((feature, index) => (
+            <div
+              key={feature.title}
+              className={`animate-fade-in-up-delay-${index + 2}`}
+            >
+              <FeatureCard
+                icon={feature.icon}
+                title={feature.title}
+                description={feature.description}
+              />
+            </div>
+          ))}
         </div>
-      </main>
-    </div>
+      </section>
+
+      {/* ---- Footer ---- */}
+      <footer
+        id="footer"
+        className="relative z-10 w-full border-t border-zinc-800/60 mt-auto"
+      >
+        <div className="max-w-5xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-violet-500/20 flex items-center justify-center">
+              <Cpu size={14} className="text-violet-400" />
+            </div>
+            <span className="text-sm font-semibold text-zinc-300">
+              ScanReact
+            </span>
+          </div>
+          <p className="text-xs text-zinc-500">
+            Open&#8209;source static analysis for React codebases.
+          </p>
+        </div>
+      </footer>
+    </main>
   );
 }
