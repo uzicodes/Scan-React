@@ -13,9 +13,20 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ScanReact — React Code Quality Analyzer",
+  title: "Scan-React",
   description:
     "Paste a GitHub repository URL and get an instant React code quality diagnostic report. Automated static analysis and compiler-readiness checks.",
+  icons: {
+    icon: [
+      { url: "/favicon/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon.ico" },
+    ],
+    apple: [
+      { url: "/favicon/apple-touch-icon.png" },
+    ],
+  },
+  manifest: "/favicon/site.webmanifest",
 };
 
 export default function RootLayout({
