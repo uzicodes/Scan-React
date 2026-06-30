@@ -33,10 +33,10 @@ export default function Home() {
       {/* ---- Hero Section ---- */}
       <section
         id="hero-section"
-        className="relative z-10 flex flex-col items-center w-full max-w-5xl mx-auto px-6 pt-28 pb-20 sm:pt-36 sm:pb-28"
+        className="relative z-10 flex flex-col items-center w-full max-w-5xl mx-auto px-6 pt-8 pb-20 sm:pt-12 sm:pb-28"
       >
         {/* Badge */}
-        <div className="animate-fade-in-up mb-8">
+        <div className="animate-fade-in-up mb-16 sm:mb-60">
           <span
             className="
               inline-flex items-center gap-2 px-4 py-1.5
@@ -48,7 +48,7 @@ export default function Home() {
           >
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-violet-500" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
             </span>
             Open-Source React Analyzer
           </span>
@@ -58,9 +58,9 @@ export default function Home() {
         <h1
           className="
             animate-fade-in-up-delay-1
-            text-4xl sm:text-5xl md:text-6xl lg:text-7xl
+            text-xl sm:text-3xl md:text-4xl lg:text-5xl
             font-bold tracking-tight text-center
-            leading-[1.1] max-w-4xl
+            leading-[1.1] max-w-none whitespace-nowrap
             text-gradient
           "
         >
@@ -71,13 +71,13 @@ export default function Home() {
         <p
           className="
             animate-fade-in-up-delay-2
-            mt-6 text-base sm:text-lg md:text-xl
+            mt-6 text-xs sm:text-sm md:text-base
             text-zinc-400 text-center
             max-w-2xl leading-relaxed
           "
         >
-          Automated static analysis and compiler&#8209;readiness checks for any
-          public GitHub repository. Ship&nbsp;faster, ship&nbsp;safer.
+          Automated static analysis and compiler&nbsp;readiness checks for any
+          public GitHub repository. Ship&nbsp;faster, Ship&nbsp;safer.
         </p>
 
         {/* Scan form */}
