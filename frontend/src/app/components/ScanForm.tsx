@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -54,7 +55,7 @@ export default function ScanForm() {
       {/* Input group */}
       <div
         className={`
-          relative flex items-center gap-2
+          relative flex flex-col sm:flex-row sm:items-center gap-2
           rounded-2xl border bg-zinc-900/80 backdrop-blur-sm
           p-1.5 transition-all duration-300
           ${isScanning
@@ -65,30 +66,32 @@ export default function ScanForm() {
           }
         `}
       >
-        <div className="pl-4 text-zinc-500">
-          <Search size={20} />
-        </div>
+        <div className="flex-1 flex items-center min-w-0">
+          <div className="pl-4 text-zinc-500">
+            <Search size={20} />
+          </div>
 
-        <input
-          id="github-url-input"
-          type="url"
-          value={githubUrl}
-          onChange={(e) => {
-            setGithubUrl(e.target.value);
-            if (error) setError('');
-          }}
-          onKeyDown={handleKeyDown}
-          placeholder="https://github.com/owner/repository"
-          disabled={isScanning}
-          aria-label="GitHub repository URL"
-          className="
-            flex-1 bg-transparent text-zinc-100
-            placeholder:text-zinc-500 text-base
-            py-3 px-2 outline-none
-            disabled:opacity-50
-            font-mono
-          "
-        />
+          <input
+            id="github-url-input"
+            type="url"
+            value={githubUrl}
+            onChange={(e) => {
+              setGithubUrl(e.target.value);
+              if (error) setError('');
+            }}
+            onKeyDown={handleKeyDown}
+            placeholder="https://github.com/owner/repository"
+            disabled={isScanning}
+            aria-label="GitHub repository URL"
+            className="
+              flex-1 min-w-0 bg-transparent text-zinc-100
+              placeholder:text-zinc-500 text-base
+              py-3 px-2 outline-none
+              disabled:opacity-50
+              font-mono
+            "
+          />
+        </div>
 
         <button
           id="start-scan-button"
@@ -96,9 +99,9 @@ export default function ScanForm() {
           disabled={!isValidUrl || isScanning}
           aria-label="Start scan"
           className={`
-            flex items-center gap-2 px-6 py-3 rounded-xl
+            flex items-center justify-center gap-2 px-6 py-3 rounded-xl
             text-sm font-semibold transition-all duration-300
-            cursor-pointer
+            cursor-pointer w-full sm:w-auto
             ${isValidUrl && !isScanning
               ? 'bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-600/20 hover:shadow-violet-500/30 active:scale-[0.97]'
               : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
