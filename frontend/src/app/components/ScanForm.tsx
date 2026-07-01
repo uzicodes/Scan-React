@@ -74,6 +74,8 @@ export default function ScanForm() {
           <input
             id="github-url-input"
             type="url"
+            autoComplete="off"
+            spellCheck="false"
             value={githubUrl}
             onChange={(e) => {
               setGithubUrl(e.target.value);
@@ -83,13 +85,14 @@ export default function ScanForm() {
             placeholder="https://github.com/owner/repository"
             disabled={isScanning}
             aria-label="GitHub repository URL"
-            className="
-              flex-1 min-w-0 bg-transparent text-zinc-100
+            className={`
+              flex-1 min-w-0 bg-transparent
               placeholder:text-zinc-500 text-base
               py-3 px-2 outline-none
               disabled:opacity-50
-              font-mono
-            "
+              font-mono transition-colors duration-200
+              ${githubUrl.trim().length > 0 ? 'text-green-400 font-medium' : 'text-zinc-100'}
+            `}
           />
         </div>
 
