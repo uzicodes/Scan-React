@@ -69,12 +69,13 @@ export default function Home() {
 
         {/* Big brand title */}
         <h1
+          style={{ fontFamily: "var(--font-eaglore), 'Eaglore', sans-serif" }}
           className="
-            animate-fade-in-up
+            animate-fade-in-up font-eaglore
             text-5xl sm:text-7xl md:text-8xl lg:text-9xl
-            font-extrabold tracking-tight text-center
+            tracking-wide text-center
             leading-none text-white
-            mb-6 sm:mb-10
+            mb-2 sm:mb-3
           "
         >
           SCAN-REACT
@@ -90,7 +91,7 @@ export default function Home() {
             text-gradient
           "
         >
-          Analyze your React codebase in seconds.
+          Analyze your React Codebase in Seconds.
         </h2>
 
         {/* Sub-headline */}
@@ -107,7 +108,7 @@ export default function Home() {
         </p>
 
         {/* Scan form */}
-        <div className="mt-12 w-full">
+        <div className="mt-16 sm:mt-20 w-full">
           <ScanForm />
         </div>
       </section>
