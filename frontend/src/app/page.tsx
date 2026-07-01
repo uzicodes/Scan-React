@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { Zap, Shield, Cpu } from 'lucide-react';
 import ScanForm from './components/ScanForm';
 import FeatureCard from './components/FeatureCard';
@@ -36,7 +37,7 @@ export default function Home() {
         className="relative z-10 flex flex-col items-center w-full max-w-5xl mx-auto px-6 pt-8 pb-20 sm:pt-12 sm:pb-28"
       >
         {/* Badge */}
-        <div className="animate-fade-in-up mb-16 sm:mb-60">
+        <div className="animate-fade-in-up mb-6 sm:mb-8">
           <span
             className="
               inline-flex items-center gap-2 px-4 py-1.5
@@ -54,8 +55,33 @@ export default function Home() {
           </span>
         </div>
 
-        {/* Heading */}
+        {/* Logo */}
+        <div className="animate-fade-in-up mb-4 sm:mb-6 flex justify-center items-center">
+          <Image
+            src="/logo.png"
+            alt="ScanReact Logo"
+            width={120}
+            height={120}
+            priority
+            className="h-12 sm:h-16 w-auto object-contain drop-shadow-[0_0_25px_rgba(139,92,246,0.35)] transition-transform duration-300 hover:scale-105"
+          />
+        </div>
+
+        {/* Big brand title */}
         <h1
+          className="
+            animate-fade-in-up
+            text-5xl sm:text-7xl md:text-8xl lg:text-9xl
+            font-extrabold tracking-tight text-center
+            leading-none text-white
+            mb-6 sm:mb-10
+          "
+        >
+          SCAN-REACT
+        </h1>
+
+        {/* Sub-heading */}
+        <h2
           className="
             animate-fade-in-up-delay-1
             text-xl sm:text-3xl md:text-4xl lg:text-5xl
@@ -65,7 +91,7 @@ export default function Home() {
           "
         >
           Analyze your React codebase in seconds.
-        </h1>
+        </h2>
 
         {/* Sub-headline */}
         <p
