@@ -1,11 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Zap, Shield, Cpu, AlertCircle } from 'lucide-react';
+import { Zap, Shield, Cpu } from 'lucide-react';
 import ScanForm from './components/ScanForm';
 import FeatureCard from './components/FeatureCard';
-import ScanResults, { ScanData } from './components/ScanResults';
 
 const features = [
   {
@@ -29,41 +28,11 @@ const features = [
 ] as const;
 
 export default function Home() {
-  const [scanData, setScanData] = useState<ScanData | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
-  const runScan = async (githubUrl: string) => {
-    setIsLoading(true);
-    setError(null);
-    setScanData(null);
-
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/scan`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ githubUrl }),
-        }
-      );
-
-      if (!response.ok) {
-        const errJson = await response.json().catch(() => ({}));
-        throw new Error(errJson.error || `Server responded with status ${response.status}`);
-      }
-
-      const result = await response.json();
-      const parsed = result.data || result;
-      setScanData(parsed);
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Unable to reach the analysis server. Is the backend running?';
-      setError(message);
-    } finally {
-      setIsLoading(false);
-    }
+  const handleScan = (githubUrl: string) => {
+    const encoded = encodeURIComponent(githubUrl);
+    router.push(`/report?url=${encoded}`);
   };
 
   return (
@@ -79,15 +48,7 @@ export default function Home() {
       >
         {/* Badge */}
         <div className="animate-fade-in-up mb-6 sm:mb-8">
-          <span
-            className="
-              inline-flex items-center gap-2 px-4 py-1.5
-              rounded-full text-xs font-medium
-              bg-violet-500/10 text-violet-300
-              border border-violet-500/20
-              backdrop-blur-sm
-            "
-          >
+          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-medium bg-violet-500/10 text-violet-300 border border-violet-500/20 backdrop-blur-sm">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
@@ -111,58 +72,26 @@ export default function Home() {
         {/* Big brand title */}
         <h1
           style={{ fontFamily: "var(--font-eaglore), 'Eaglore', sans-serif" }}
-          className="
-            animate-fade-in-up font-eaglore
-            text-5xl sm:text-7xl md:text-8xl lg:text-9xl
-            tracking-wide text-center
-            leading-none text-white
-            mb-2 sm:mb-3
-          "
+          className="animate-fade-in-up font-eaglore text-5xl sm:text-7xl md:text-8xl lg:text-9xl tracking-wide text-center leading-none text-white mb-2 sm:mb-3"
         >
           SCAN-REACT
         </h1>
 
         {/* Sub-heading */}
-        <h2
-          className="
-            animate-fade-in-up-delay-1
-            text-xl sm:text-3xl md:text-4xl lg:text-5xl
-            font-bold tracking-tight text-center
-            leading-[1.1] max-w-none whitespace-nowrap
-            text-gradient
-          "
-        >
+        <h2 className="animate-fade-in-up-delay-1 text-xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-center leading-[1.1] max-w-none whitespace-nowrap text-gradient">
           Analyze your React Codebase in Seconds.
         </h2>
 
         {/* Sub-headline */}
-        <p
-          className="
-            animate-fade-in-up-delay-2
-            mt-6 text-xs sm:text-sm md:text-base
-            text-zinc-400 text-center
-            max-w-2xl leading-relaxed
-          "
-        >
+        <p className="animate-fade-in-up-delay-2 mt-6 text-xs sm:text-sm md:text-base text-zinc-400 text-center max-w-2xl leading-relaxed">
           Automated static analysis and compiler&nbsp;readiness checks for any
           public GitHub repository. Ship&nbsp;faster, Ship&nbsp;safer.
         </p>
 
         {/* Scan form */}
         <div className="mt-16 sm:mt-20 w-full">
-          <ScanForm isLoading={isLoading} onScan={runScan} />
+          <ScanForm onScan={handleScan} />
         </div>
-
-        {/* Error message */}
-        {error && (
-          <div className="mt-8 w-full max-w-2xl mx-auto bg-rose-500/10 border border-rose-500/30 rounded-xl p-4 flex items-center gap-3 text-rose-300 animate-fade-in-up">
-            <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
-            <p className="text-sm font-medium">{error}</p>
-          </div>
-        )}
-
-        {/* Render the Results */}
-        {scanData && <ScanResults data={scanData} />}
       </section>
 
       {/* ---- Divider shimmer ---- */}
