@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Zap, Shield, Cpu } from 'lucide-react';
 import ScanForm from './components/ScanForm';
 import FeatureCard from './components/FeatureCard';
+import Pipeline from './components/Pipeline';
 
 const features = [
   {
@@ -94,10 +95,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ---- Divider shimmer ---- */}
-      <div className="relative z-10 w-full max-w-3xl mx-auto px-6">
-        <div className="h-px w-full animate-shimmer rounded-full" />
-      </div>
+      {/* ---- Data Pipeline Architecture Section ---- */}
+      <Pipeline />
 
       {/* ---- Features Grid ---- */}
       <section
@@ -105,7 +104,7 @@ export default function Home() {
         className="relative z-10 w-full max-w-5xl mx-auto px-6 py-20 sm:py-28"
       >
         <div className="text-center mb-14 animate-fade-in-up-delay-3">
-          <h2 className="text-2xl sm:text-3xl font-bold text-zinc-100 mb-3">
+          <h2 className="text-2xl sm:text-3xl font-bold text-[#74cc00] mb-3">
             Built for Modern React
           </h2>
           <p className="text-zinc-400 text-base max-w-xl mx-auto">
