@@ -8,6 +8,22 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/Satoshi.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Space Grotesk';
+  src: url('/fonts/SpaceGrotesk.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --background: #09090b;
   --foreground: #fafafa;
@@ -36,7 +52,8 @@
   --color-accent-glow: var(--accent-glow);
   --color-accent-glow-strong: var(--accent-glow-strong);
   --color-surface: var(--surface);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-satoshi), 'Satoshi', var(--font-geist-sans), sans-serif;
+  --font-heading: var(--font-space-grotesk), 'Space Grotesk', sans-serif;
   --font-mono: var(--font-geist-mono);
   --font-eaglore: var(--font-eaglore), 'Eaglore', sans-serif;
 }
@@ -44,7 +61,11 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans, system-ui, -apple-system, sans-serif);
+  font-family: var(--font-sans, 'Satoshi', system-ui, -apple-system, sans-serif);
+}
+
+h1:not(.font-eaglore), h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading, var(--font-space-grotesk), 'Space Grotesk', sans-serif);
 }
 
 input:-webkit-autofill,

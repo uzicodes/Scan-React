@@ -18,6 +18,16 @@ const eaglore = localFont({
   variable: "--font-eaglore",
 });
 
+const satoshi = localFont({
+  src: "../../public/fonts/Satoshi.woff2",
+  variable: "--font-satoshi",
+});
+
+const spaceGrotesk = localFont({
+  src: "../../public/fonts/SpaceGrotesk.woff2",
+  variable: "--font-space-grotesk",
+});
+
 export const metadata: Metadata = {
   title: "Scan-React",
   description:
@@ -43,7 +53,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${eaglore.variable} h-full antialiased dark`}
+      className={`${geistSans.variable} ${geistMono.variable} ${eaglore.variable} ${satoshi.variable} ${spaceGrotesk.variable} h-full antialiased dark`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         {children}
