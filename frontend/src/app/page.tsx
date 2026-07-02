@@ -11,13 +11,13 @@ const features = [
     icon: Zap,
     title: 'Instant Diagnostics',
     description:
-      'Get a comprehensive code quality report in seconds. No local setup, no CLI to install — just paste your URL and go.',
+      'Get a comprehensive code quality report in seconds. No local setup, no CLI to install.',
   },
   {
     icon: Cpu,
     title: 'React Compiler Ready',
     description:
-      'Verify whether your codebase meets the requirements for automatic optimization with the React Compiler.',
+      'Verify your codebase for automatic optimization with the React Compiler.',
   },
   {
     icon: Shield,
@@ -69,7 +69,7 @@ export default function Home() {
           />
         </div>
 
-        {/* Big brand title */}
+        {/* Brand title */}
         <h1
           style={{ fontFamily: "var(--font-eaglore), 'Eaglore', sans-serif" }}
           className="animate-fade-in-up font-eaglore text-5xl sm:text-7xl md:text-8xl lg:text-9xl tracking-wide text-center leading-none text-white mb-2 sm:mb-3"
@@ -89,7 +89,7 @@ export default function Home() {
         </p>
 
         {/* Scan form */}
-        <div className="mt-16 sm:mt-20 w-full">
+        <div className="mt-16 sm:mt-19 w-full">
           <ScanForm onScan={handleScan} />
         </div>
       </section>
@@ -138,7 +138,12 @@ export default function Home() {
         <div className="max-w-5xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-md bg-violet-500/20 flex items-center justify-center">
-              <Cpu size={14} className="text-violet-400" />
+              <Image
+                src="/logo.png"
+                alt="ScanReact Logo"
+                width={80}
+                height={80}
+              />
             </div>
             <span className="text-sm font-semibold text-zinc-300">
               ScanReact
