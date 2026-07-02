@@ -4,15 +4,21 @@
 import { useState } from 'react';
 import { Search, Loader2 } from 'lucide-react';
 
-export default function ScanForm() {
+interface ScanFormProps {
+  isLoading?: boolean;
+  onScan?: (url: string) => void;
+}
+
+export default function ScanForm({ isLoading = false, onScan }: ScanFormProps = {}) {
   const [githubUrl, setGithubUrl] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState('');
 
+  const loading = isLoading || isScanning;
   const isValidUrl = githubUrl.trim().length > 0;
 
   const handleScan = async () => {
-    if (!isValidUrl || isScanning) return;
+    if (!isValidUrl || loading) return;
 
     const ghUrlPattern = /^https?:\/\/(www\.)?github\.com\/[\w.-]+\/[\w.-]+/;
     if (!ghUrlPattern.test(githubUrl.trim())) {
@@ -21,6 +27,12 @@ export default function ScanForm() {
     }
 
     setError('');
+
+    if (onScan) {
+      onScan(githubUrl.trim());
+      return;
+    }
+
     setIsScanning(true);
 
     try {
@@ -58,7 +70,7 @@ export default function ScanForm() {
           relative flex flex-col sm:flex-row sm:items-center gap-2
           rounded-2xl border bg-zinc-900/80 backdrop-blur-sm
           p-1.5 transition-all duration-300
-          ${isScanning
+          ${loading
             ? 'border-violet-500/50 animate-pulse-glow'
             : error
               ? 'border-red-500/50'
@@ -83,7 +95,7 @@ export default function ScanForm() {
             }}
             onKeyDown={handleKeyDown}
             placeholder="https://github.com/owner/repository"
-            disabled={isScanning}
+            disabled={loading}
             aria-label="GitHub repository URL"
             className={`
               flex-1 min-w-0 bg-transparent
@@ -99,22 +111,22 @@ export default function ScanForm() {
         <button
           id="start-scan-button"
           onClick={handleScan}
-          disabled={!isValidUrl || isScanning}
+          disabled={!isValidUrl || loading}
           aria-label="Start scan"
           className={`
             flex items-center justify-center gap-2 px-6 py-3 rounded-xl
             text-sm font-semibold transition-all duration-300
             cursor-pointer w-full sm:w-auto
-            ${isValidUrl && !isScanning
+            ${isValidUrl && !loading
               ? 'bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-600/20 hover:shadow-violet-500/30 active:scale-[0.97]'
               : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
             }
           `}
         >
-          {isScanning ? (
+          {loading ? (
             <>
               <Loader2 size={16} className="animate-spin-slow" />
-              <span>Scanning…</span>
+              <span>Analyzing...</span>
             </>
           ) : (
             <span>Start Scan</span>

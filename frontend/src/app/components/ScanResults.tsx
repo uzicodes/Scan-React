@@ -19,7 +19,7 @@ interface Diagnostic {
     context: string;
 }
 
-interface ScanData {
+export interface ScanData {
     score: number;
     diagnostics: Diagnostic[];
 }
@@ -27,7 +27,7 @@ interface ScanData {
 export default function ScanResults({ data }: { data: ScanData | null }) {
     const [filter, setFilter] = useState<'all' | 'error' | 'warning'>('all');
 
-    if (!data) return null;
+    if (!data || !Array.isArray(data.diagnostics)) return null;
 
     const errors = data.diagnostics.filter(d => d.severity === 'error');
     const warnings = data.diagnostics.filter(d => d.severity === 'warning');

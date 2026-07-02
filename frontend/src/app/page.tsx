@@ -1,7 +1,11 @@
+'use client';
+
+import { useState } from 'react';
 import Image from 'next/image';
-import { Zap, Shield, Cpu } from 'lucide-react';
+import { Zap, Shield, Cpu, AlertCircle } from 'lucide-react';
 import ScanForm from './components/ScanForm';
 import FeatureCard from './components/FeatureCard';
+import ScanResults, { ScanData } from './components/ScanResults';
 
 const features = [
   {
@@ -25,6 +29,43 @@ const features = [
 ] as const;
 
 export default function Home() {
+  const [scanData, setScanData] = useState<ScanData | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const runScan = async (githubUrl: string) => {
+    setIsLoading(true);
+    setError(null);
+    setScanData(null);
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/scan`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ githubUrl }),
+        }
+      );
+
+      if (!response.ok) {
+        const errJson = await response.json().catch(() => ({}));
+        throw new Error(errJson.error || `Server responded with status ${response.status}`);
+      }
+
+      const result = await response.json();
+      const parsed = result.data || result;
+      setScanData(parsed);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unable to reach the analysis server. Is the backend running?';
+      setError(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <main className="relative flex flex-col items-center min-h-screen overflow-hidden">
       {/* ---- Background layers ---- */}
@@ -109,8 +150,19 @@ export default function Home() {
 
         {/* Scan form */}
         <div className="mt-16 sm:mt-20 w-full">
-          <ScanForm />
+          <ScanForm isLoading={isLoading} onScan={runScan} />
         </div>
+
+        {/* Error message */}
+        {error && (
+          <div className="mt-8 w-full max-w-2xl mx-auto bg-rose-500/10 border border-rose-500/30 rounded-xl p-4 flex items-center gap-3 text-rose-300 animate-fade-in-up">
+            <AlertCircle className="w-5 h-5 text-rose-400 shrink-0" />
+            <p className="text-sm font-medium">{error}</p>
+          </div>
+        )}
+
+        {/* Render the Results */}
+        {scanData && <ScanResults data={scanData} />}
       </section>
 
       {/* ---- Divider shimmer ---- */}
