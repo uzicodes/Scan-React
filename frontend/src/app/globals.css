@@ -181,6 +181,13 @@ input:-webkit-autofill:active {
   background-clip: text;
 }
 
+.text-gradient-lime {
+  background: linear-gradient(180deg, #c8ff6b 0%, #74cc00 60%, #467d00 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
 /* ---- Custom scrollbar ---- */
 ::-webkit-scrollbar {
   width: 6px;

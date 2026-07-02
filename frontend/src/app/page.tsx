@@ -62,17 +62,17 @@ export default function Home() {
           <Image
             src="/logo.png"
             alt="ScanReact Logo"
-            width={120}
-            height={120}
+            width={130}
+            height={130}
             priority
-            className="h-12 sm:h-16 w-auto object-contain drop-shadow-[0_0_25px_rgba(139,92,246,0.35)] transition-transform duration-300 hover:scale-105"
+            className="h-14 sm:h-18 w-auto object-contain transition-transform duration-300 hover:scale-105"
           />
         </div>
 
         {/* Brand title */}
         <h1
           style={{ fontFamily: "var(--font-eaglore), 'Eaglore', sans-serif" }}
-          className="animate-fade-in-up font-eaglore text-5xl sm:text-7xl md:text-8xl lg:text-9xl tracking-wide text-center leading-none text-white mb-2 sm:mb-3"
+          className="animate-fade-in-up font-eaglore text-5xl sm:text-7xl md:text-8xl lg:text-9xl tracking-wide text-center leading-none text-gradient-lime mb-2 sm:mb-3"
         >
           SCAN-REACT
         </h1>
@@ -137,16 +137,20 @@ export default function Home() {
       >
         <div className="max-w-5xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md bg-violet-500/20 flex items-center justify-center">
+            <div className="flex items-center justify-center">
               <Image
                 src="/logo.png"
                 alt="ScanReact Logo"
-                width={80}
-                height={80}
+                width={30}
+                height={30}
+                className="w-8 h-8 object-contain"
               />
             </div>
-            <span className="text-sm font-semibold text-zinc-300">
-              ScanReact
+            <span
+              style={{ fontFamily: "var(--font-eaglore), 'Eaglore', sans-serif" }}
+              className="font-eaglore text-2xl tracking-wide text-gradient-lime"
+            >
+              SCAN-REACT
             </span>
           </div>
           <p className="text-xs text-zinc-500">
