@@ -55,10 +55,10 @@ app.post('/api/scan', async (req, res) => {
         // Native Windows/Node method to safely delete the folder
         await fs.promises.rm(targetDir, { recursive: true, force: true });
 
-        // ── Parse verbose output line-by-line ──
+        // ── Parse verbose output ──
         const parsedData = parseVerboseOutput(rawOutput);
 
-        console.log(`--- SCAN COMPLETE (score: ${parsedData.score}) ---\n`);
+        console.log(`--- SCAN COMPLETE (score: ${parsedData.score}, issues: ${parsedData.diagnostics.length}) ---\n`);
         return res.json({ success: true, data: parsedData });
 
     } catch (error) {
@@ -83,103 +83,172 @@ app.post('/api/scan', async (req, res) => {
 /**
  * Parse the raw verbose output from react-doctor into structured data.
  *
- * Expected patterns in the verbose terminal output:
- *   Score line:       "81 / 100 Needs work"  or  "95 / 100 Great"
- *   File header:      "src/components/App.tsx"
- *   Diagnostic line:  "  Line 42  warning  [bugs] Mutating a variable ..."
- *                     "  Line 42  error    [accessibility] Missing alt ..."
- *   Code context:     "    > 42 | const x = props.y; x.z = 1;"
- *   Solution line:    "  → Move the hook call to the top level of your component."
+ * Actual react-doctor --verbose output format (v0.6.x):
+ *
+ *   ⚠ Bugs: useSearchParams without Suspense
+ *     Learn more: https://react.doctor/docs/rules/...
+ *     <ClientPage> uses useSearchParams() outside <Suspense>, so
+ *     this page falls back to client-side rendering.
+ *     → Wrap the component using `useSearchParams` in
+ *     `<Suspense>` so the rest of the page can stay statically
+ *     rendered.
+ *
+ *     app/login/page.tsx:16
+ *
+ *   ────────────────────────────────────────────────────────────
+ *   All 6 issues
+ *   Bugs › 1 warning
+ *   ...
+ *   ┌─────┐  81 / 100 Needs work
+ *   │ ◠ ◠ │  ████████████████████░░░░░░░░░
+ *   │  ▽  │  React Doctor (https://react.doctor)
  */
 function parseVerboseOutput(raw) {
     if (!raw || typeof raw !== 'string') {
         return { score: 0, diagnostics: [] };
     }
 
-    const lines = raw.split('\n');
+    // Strip ANSI escape codes (color, bold, etc.)
+    const clean = raw.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '');
+    const lines = clean.split('\n');
+
     let score = 0;
-    const diagnostics = [];
+    const groups = [];
+    let current = null;
 
-    // Regex patterns
-    const scoreRegex = /(\d{1,3})\s*\/\s*100/;
-    const diagnosticRegex = /^\s*Line\s+(\d+)\s+(warning|error)\s+\[([^\]]+)\]\s+(.+)/i;
-    const filePathRegex = /^([^\s].*\.(tsx?|jsx?|mjs|cjs))$/;
-    const solutionRegex = /^\s*→\s*(.+)/;
-    const contextRegex = /^\s*>?\s*\d+\s*\|/;
+    // Phase tracks where we are inside a diagnostic block:
+    //   idle → header found → meta (learn more) → description → solution → files
+    let phase = 'idle';
+    let pastSeparator = false;
 
-    let currentFile = '';
-    let currentDiagnostic = null;
-    let diagnosticCounter = 0;
+    // ── Regex patterns matching actual react-doctor verbose format ──
+    // Header:  "  ⚠ Bugs: useSearchParams without Suspense"  or with "×2"
+    const headerRe = /^\s*[⚠✖]\s+([^:]+?):\s*(.+?)(?:\s*×(\d+))?\s*$/;
+    // Learn more URL
+    const learnMoreRe = /^\s*Learn more:\s*(https?:\/\/\S+)/;
+    // Solution start:  "    → Wrap the component..."
+    const solutionRe = /^\s*→\s*(.+)/;
+    // File location:   "    app/login/page.tsx:16"  or  "    src/actions/getNavData.ts"
+    const fileLocRe = /^\s{4,}([\w@./-]+\.\w{1,10})(?::(\d+))?\s*$/;
+    // Separator line:  "  ────────────────────────"
+    const separatorRe = /^\s*[─━]{4,}/;
+    // Score:  "81 / 100 Needs work"
+    const scoreRe = /(\d{1,3})\s*\/\s*100/;
 
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
+    for (const line of lines) {
         const trimmed = line.trim();
 
-        // Skip empty lines
-        if (!trimmed) continue;
-
-        // 1. Extract score from "NN / 100" pattern
-        const scoreMatch = trimmed.match(scoreRegex);
-        if (scoreMatch && !currentDiagnostic) {
-            score = parseInt(scoreMatch[1], 10);
+        // ── Separator ends all diagnostic blocks ──
+        if (separatorRe.test(trimmed)) {
+            if (current) {
+                groups.push(current);
+                current = null;
+            }
+            pastSeparator = true;
+            phase = 'idle';
             continue;
         }
 
-        // 2. Detect file path headers (e.g. "src/components/App.tsx")
-        const fileMatch = trimmed.match(filePathRegex);
-        if (fileMatch) {
-            // Flush any in-progress diagnostic before switching files
-            if (currentDiagnostic) {
-                diagnostics.push(currentDiagnostic);
-                currentDiagnostic = null;
-            }
-            currentFile = fileMatch[1];
+        // ── Score extraction (usually in the summary section after separator) ──
+        if (scoreRe.test(trimmed)) {
+            score = parseInt(trimmed.match(scoreRe)[1], 10);
             continue;
         }
 
-        // 3. Detect diagnostic lines: "Line 42  warning  [bugs] Some message"
-        const diagMatch = line.match(diagnosticRegex);
-        if (diagMatch) {
-            // Flush previous diagnostic
-            if (currentDiagnostic) {
-                diagnostics.push(currentDiagnostic);
-            }
-            diagnosticCounter++;
-            currentDiagnostic = {
-                id: `diag-${diagnosticCounter}`,
-                file: currentFile,
-                line: parseInt(diagMatch[1], 10),
-                severity: diagMatch[2].toLowerCase(),
-                category: diagMatch[3].trim().toLowerCase(),
-                message: diagMatch[4].trim(),
-                context: '',
+        // Skip everything after the separator (summary lines, ASCII art, etc.)
+        if (pastSeparator) continue;
+
+        // ── New diagnostic group header ──
+        const headerMatch = trimmed.match(headerRe);
+        if (headerMatch) {
+            // Flush any previous group
+            if (current) groups.push(current);
+            current = {
+                severity: line.includes('✖') ? 'error' : 'warning',
+                category: headerMatch[1].trim(),
+                rule: headerMatch[2].trim(),
+                count: headerMatch[3] ? parseInt(headerMatch[3], 10) : 1,
+                learnMore: '',
+                message: '',
                 solution: '',
+                files: [],
             };
+            phase = 'meta';
             continue;
         }
 
-        // 4. Capture solution lines starting with →
-        const solMatch = line.match(solutionRegex);
-        if (solMatch && currentDiagnostic) {
-            currentDiagnostic.solution = currentDiagnostic.solution
-                ? currentDiagnostic.solution + ' ' + solMatch[1].trim()
-                : solMatch[1].trim();
+        // Everything below requires an active group
+        if (!current) continue;
+
+        // ── Blank line handling ──
+        if (!trimmed) {
+            // After solution text, blank line transitions us to file-locations phase
+            if (phase === 'solution') {
+                phase = 'files';
+            }
             continue;
         }
 
-        // 5. Capture code context lines (lines with "> NN |" or "  NN |")
-        if (contextRegex.test(line) && currentDiagnostic) {
-            currentDiagnostic.context = currentDiagnostic.context
-                ? currentDiagnostic.context + '\n' + line
-                : line;
+        // ── Learn more URL (appears right after header) ──
+        if (phase === 'meta') {
+            const lmMatch = trimmed.match(learnMoreRe);
+            if (lmMatch) {
+                current.learnMore = lmMatch[1];
+                phase = 'description';
+                continue;
+            }
+            // No "Learn more" line — fall through to description
+            phase = 'description';
+        }
+
+        // ── Solution start (→ line) ──
+        const solMatch = line.match(solutionRe);
+        if (solMatch) {
+            current.solution = solMatch[1].trim();
+            phase = 'solution';
+            continue;
+        }
+
+        // ── Solution continuation (indented lines after →) ──
+        if (phase === 'solution') {
+            current.solution += ' ' + trimmed;
+            continue;
+        }
+
+        // ── File locations (after solution + blank line) ──
+        if (phase === 'files') {
+            const fileMatch = line.match(fileLocRe);
+            if (fileMatch) {
+                current.files.push({
+                    file: fileMatch[1],
+                    line: fileMatch[2] ? parseInt(fileMatch[2], 10) : 0,
+                });
+            }
+            continue;
+        }
+
+        // ── Description text (multi-line, before → line) ──
+        if (phase === 'description') {
+            current.message += (current.message ? ' ' : '') + trimmed;
             continue;
         }
     }
 
-    // Flush the last diagnostic if still pending
-    if (currentDiagnostic) {
-        diagnostics.push(currentDiagnostic);
-    }
+    // Flush last group
+    if (current) groups.push(current);
+
+    // ── Build final diagnostics array (one entry per rule group) ──
+    const diagnostics = groups.map((g, i) => ({
+        id: `diag-${i + 1}`,
+        severity: g.severity,
+        category: g.category,
+        rule: g.rule,
+        count: g.count,
+        message: g.message,
+        solution: g.solution,
+        learnMore: g.learnMore,
+        files: g.files,
+    }));
 
     // Fallback: if we got nothing useful, return raw text for debugging
     if (diagnostics.length === 0 && score === 0) {

@@ -5,24 +5,31 @@ import {
     AlertTriangle,
     CheckCircle2,
     FileCode,
-    TerminalSquare,
     ShieldAlert,
     Lightbulb,
     Wrench,
     Eye,
+    ExternalLink,
+    Hash,
 } from 'lucide-react';
 
 /* ──────────────────────────── Types ──────────────────────────── */
 
+interface FileLocation {
+    file: string;
+    line?: number;
+}
+
 interface Diagnostic {
     id: string;
-    file: string;
-    line: number;
     severity: 'error' | 'warning';
     category: string;
+    rule: string;
+    count?: number;
     message: string;
-    context: string;
     solution?: string;
+    learnMore?: string;
+    files: FileLocation[];
 }
 
 export interface ScanData {
@@ -39,7 +46,6 @@ function ScoreRing({ score }: { score: number }) {
     const circumference = 2 * Math.PI * normalizedRadius;
     const offset = circumference - (score / 100) * circumference;
 
-    // Color based on score
     const getColor = (s: number) => {
         if (s >= 90) return { ring: '#10b981', glow: 'rgba(16, 185, 129, 0.25)', text: 'text-emerald-400', label: 'Excellent' };
         if (s >= 70) return { ring: '#f59e0b', glow: 'rgba(245, 158, 11, 0.25)', text: 'text-amber-400', label: 'Needs Work' };
@@ -50,18 +56,15 @@ function ScoreRing({ score }: { score: number }) {
 
     return (
         <div className="relative flex items-center justify-center" style={{ width: radius * 2, height: radius * 2 }}>
-            {/* Glow effect */}
             <div
                 className="absolute inset-0 rounded-full blur-2xl opacity-40"
                 style={{ background: color.glow }}
             />
-
             <svg
                 width={radius * 2}
                 height={radius * 2}
                 className="transform -rotate-90"
             >
-                {/* Background track */}
                 <circle
                     cx={radius}
                     cy={radius}
@@ -70,7 +73,6 @@ function ScoreRing({ score }: { score: number }) {
                     stroke="rgba(63, 63, 70, 0.4)"
                     strokeWidth={stroke}
                 />
-                {/* Animated progress arc */}
                 <circle
                     cx={radius}
                     cy={radius}
@@ -88,8 +90,6 @@ function ScoreRing({ score }: { score: number }) {
                     }}
                 />
             </svg>
-
-            {/* Center text */}
             <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ animation: 'count-up 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.4s both' }}>
                 <span className={`text-5xl font-bold tracking-tight ${color.text}`}>
                     {score}
@@ -126,6 +126,19 @@ function StatCard({ label, count, icon: Icon, accentBg, accentBorder, accentText
     );
 }
 
+/* ──────────────────────────── Category Helpers ──────────────────────────── */
+
+function getCategoryStyle(category: string) {
+    const cat = category.toLowerCase();
+    if (cat.includes('bug'))
+        return { bg: 'bg-rose-500/15', border: 'border-rose-500/20', text: 'text-rose-400', icon: ShieldAlert };
+    if (cat.includes('accessibility') || cat.includes('a11y'))
+        return { bg: 'bg-amber-500/15', border: 'border-amber-500/20', text: 'text-amber-400', icon: Eye };
+    if (cat.includes('maintain'))
+        return { bg: 'bg-indigo-500/15', border: 'border-indigo-500/20', text: 'text-indigo-400', icon: Wrench };
+    return { bg: 'bg-zinc-500/15', border: 'border-zinc-500/20', text: 'text-zinc-400', icon: AlertTriangle };
+}
+
 /* ──────────────────────────── Main Component ──────────────────────────── */
 
 export default function ScanResults({ data }: { data: ScanData | null }) {
@@ -140,17 +153,20 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
         filter === 'all' ? true : d.severity === filter
     );
 
-    // Category counts (case-insensitive)
+    // Category counts using the count field from verbose parser
     const categoryCounts = useMemo(() => {
         const counts = { bugs: 0, accessibility: 0, maintainability: 0 };
         data.diagnostics.forEach(d => {
             const cat = d.category?.toLowerCase() || '';
-            if (cat.includes('bug')) counts.bugs++;
-            else if (cat.includes('accessibility') || cat.includes('a11y')) counts.accessibility++;
-            else if (cat.includes('maintain') || cat.includes('quality') || cat.includes('style')) counts.maintainability++;
+            const n = d.count || 1;
+            if (cat.includes('bug')) counts.bugs += n;
+            else if (cat.includes('accessibility') || cat.includes('a11y')) counts.accessibility += n;
+            else if (cat.includes('maintain') || cat.includes('quality') || cat.includes('style')) counts.maintainability += n;
         });
         return counts;
     }, [data.diagnostics]);
+
+    const totalIssues = categoryCounts.bugs + categoryCounts.accessibility + categoryCounts.maintainability;
 
     return (
         <div className="w-full max-w-5xl mx-auto mt-12 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -196,6 +212,10 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
                 {/* Summary bar */}
                 <div className="mt-6 pt-5 border-t border-zinc-800/60 flex items-center justify-center gap-6 text-sm">
                     <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-violet-500" />
+                        <span className="text-zinc-400"><span className="text-zinc-200 font-semibold">{totalIssues}</span> Total Issues</span>
+                    </div>
+                    <div className="flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-rose-500" />
                         <span className="text-zinc-400"><span className="text-zinc-200 font-semibold">{errors.length}</span> Errors</span>
                     </div>
@@ -203,15 +223,11 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
                         <span className="w-2 h-2 rounded-full bg-amber-500" />
                         <span className="text-zinc-400"><span className="text-zinc-200 font-semibold">{warnings.length}</span> Warnings</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                        <span className="text-zinc-400"><span className="text-zinc-200 font-semibold">{data.diagnostics.length}</span> Total</span>
-                    </div>
                 </div>
             </section>
 
-            {/* ═══════════════════ React Compiler Success State ═══════════════════ */}
-            {errors.length === 0 && (
+            {/* ═══════════════════ React Compiler Success ═══════════════════ */}
+            {errors.length === 0 && data.diagnostics.length === 0 && (
                 <div className="bg-indigo-500/10 border border-indigo-500/30 rounded-xl p-6 flex items-start gap-4">
                     <CheckCircle2 className="w-8 h-8 text-indigo-400 shrink-0 mt-1" />
                     <div>
@@ -243,81 +259,119 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
                 ))}
             </div>
 
-            {/* ═══════════════════ 3. Diagnostics List ═══════════════════ */}
-            <div className="space-y-4">
-                {displayedDiagnostics.map((issue, idx) => (
-                    <div
-                        key={`${issue.id}-${idx}`}
-                        className="bg-zinc-950/80 border border-zinc-800/80 rounded-xl overflow-hidden shadow-lg shadow-black/20 backdrop-blur-sm transition-all duration-300 hover:border-zinc-700/80 hover:shadow-xl"
-                    >
-                        {/* ── Card Header ── */}
-                        <div className="p-5 border-b border-zinc-800/50 flex items-start gap-4">
-                            <div className="mt-1">
-                                {issue.severity === 'error' ? (
-                                    <ShieldAlert className="w-5 h-5 text-rose-500" />
-                                ) : (
-                                    <AlertTriangle className="w-5 h-5 text-amber-500" />
-                                )}
-                            </div>
+            {/* ═══════════════════ 3. Issue Cards ═══════════════════ */}
+            <div className="space-y-5">
+                {displayedDiagnostics.map((issue) => {
+                    const catStyle = getCategoryStyle(issue.category);
+                    const CatIcon = catStyle.icon;
 
-                            <div className="flex-1 min-w-0">
-                                {/* Category + File path + Line */}
-                                <div className="flex items-center gap-3 mb-2 flex-wrap">
-                                    <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md ${issue.severity === 'error'
-                                        ? 'bg-rose-500/15 text-rose-400 border border-rose-500/20'
-                                        : 'bg-amber-500/15 text-amber-400 border border-amber-500/20'
-                                        }`}>
-                                        {issue.category}
-                                    </span>
-                                    <div className="flex items-center text-xs text-zinc-500 font-mono gap-1.5">
-                                        <FileCode className="w-3.5 h-3.5 text-zinc-600" />
-                                        <span className="text-zinc-400">{issue.file}</span>
-                                        <span className="text-zinc-600">:</span>
-                                        <span className="text-indigo-400 font-semibold">{issue.line}</span>
-                                    </div>
-                                </div>
-
-                                {/* Problem / Message */}
-                                <p className="text-zinc-300 font-medium leading-relaxed">
-                                    {issue.message}
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* ── Actionable Solution Block ── */}
-                        {issue.solution && (
-                            <div className="mx-5 my-4 p-4 rounded-lg bg-emerald-500/[0.07] border border-emerald-500/20 flex items-start gap-3">
+                    return (
+                        <div
+                            key={issue.id}
+                            className="bg-zinc-950/80 border border-zinc-800/80 rounded-xl overflow-hidden shadow-lg shadow-black/20 backdrop-blur-sm transition-all duration-300 hover:border-zinc-700/80 hover:shadow-xl"
+                        >
+                            {/* ── Card Header: Category + Rule Name ── */}
+                            <div className="p-5 pb-4 flex items-start gap-4">
                                 <div className="mt-0.5 shrink-0">
-                                    <Lightbulb className="w-4.5 h-4.5 text-emerald-400" />
+                                    {issue.severity === 'error' ? (
+                                        <ShieldAlert className="w-5 h-5 text-rose-500" />
+                                    ) : (
+                                        <AlertTriangle className="w-5 h-5 text-amber-500" />
+                                    )}
                                 </div>
-                                <div>
-                                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-500/80 block mb-1">
-                                        Recommended Fix
-                                    </span>
-                                    <p className="text-emerald-300/90 text-sm leading-relaxed">
-                                        {issue.solution}
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-3 mb-2 flex-wrap">
+                                        {/* Category badge */}
+                                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md ${catStyle.bg} ${catStyle.text} border ${catStyle.border}`}>
+                                            {issue.category}
+                                        </span>
+                                        {/* Issue count badge */}
+                                        {(issue.count ?? 1) > 1 && (
+                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-400 border border-zinc-700">
+                                                ×{issue.count}
+                                            </span>
+                                        )}
+                                    </div>
+                                    {/* Rule name as title */}
+                                    <h3 className="text-zinc-100 font-semibold text-base leading-snug">
+                                        {issue.rule}
+                                    </h3>
+                                </div>
+                            </div>
+
+                            {/* ── Description / Problem ── */}
+                            {issue.message && (
+                                <div className="px-5 pb-4 pl-14">
+                                    <p className="text-zinc-400 text-sm leading-relaxed">
+                                        {issue.message}
                                     </p>
                                 </div>
-                            </div>
-                        )}
+                            )}
 
-                        {/* ── Code Snippet Panel ── */}
-                        {issue.context && (
-                            <div className="bg-zinc-950 p-4 font-mono text-sm relative group border-t border-zinc-800/30">
-                                <div className="absolute top-4 right-4 opacity-30 group-hover:opacity-100 transition-opacity">
-                                    <TerminalSquare className="w-4 h-4 text-zinc-500" />
+                            {/* ── Actionable Solution Block ── */}
+                            {issue.solution && (
+                                <div className="mx-5 mb-4 ml-14 p-4 rounded-lg bg-emerald-500/[0.07] border border-emerald-500/20 flex items-start gap-3">
+                                    <div className="mt-0.5 shrink-0">
+                                        <Lightbulb size={16} className="text-emerald-400" />
+                                    </div>
+                                    <div>
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-500/80 block mb-1">
+                                            Recommended Fix
+                                        </span>
+                                        <p className="text-emerald-300/90 text-sm leading-relaxed">
+                                            {issue.solution}
+                                        </p>
+                                    </div>
                                 </div>
-                                <pre className="text-zinc-400 overflow-x-auto whitespace-pre-wrap">
-                                    <code>{issue.context}</code>
-                                </pre>
-                            </div>
-                        )}
-                    </div>
-                ))}
+                            )}
+
+                            {/* ── Affected Files ── */}
+                            {issue.files && issue.files.length > 0 && (
+                                <div className="mx-5 mb-4 ml-14">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-2">
+                                        Affected Files
+                                    </span>
+                                    <div className="space-y-1.5">
+                                        {issue.files.map((f, i) => (
+                                            <div key={i} className="flex items-center gap-2 text-xs font-mono bg-zinc-900/80 border border-zinc-800/60 rounded-lg px-3 py-2">
+                                                <FileCode size={13} className="text-zinc-600 shrink-0" />
+                                                <span className="text-zinc-300 truncate">{f.file}</span>
+                                                {f.line !== undefined && f.line > 0 && (
+                                                    <>
+                                                        <span className="text-zinc-600">:</span>
+                                                        <span className="flex items-center gap-0.5 text-indigo-400 font-semibold">
+                                                            <Hash size={10} className="text-indigo-500/60" />
+                                                            {f.line}
+                                                        </span>
+                                                    </>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* ── Learn More Link ── */}
+                            {issue.learnMore && (
+                                <div className="px-5 pb-4 pl-14 border-t border-zinc-800/30 pt-3">
+                                    <a
+                                        href={issue.learnMore}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1.5 text-xs text-indigo-400/80 hover:text-indigo-300 transition-colors font-medium"
+                                    >
+                                        Learn more
+                                        <ExternalLink size={11} />
+                                    </a>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
 
                 {displayedDiagnostics.length === 0 && (
                     <div className="text-center py-12 text-zinc-500">
-                        No {filter}s found.
+                        No {filter === 'all' ? 'issues' : `${filter}s`} found.
                     </div>
                 )}
             </div>
