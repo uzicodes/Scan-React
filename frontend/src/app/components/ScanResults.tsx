@@ -21,20 +21,22 @@ interface FileLocation {
 }
 
 interface Diagnostic {
-    id: string;
-    severity: 'error' | 'warning';
-    category: string;
-    rule: string;
+    id?: string;
+    severity?: 'error' | 'warning' | string;
+    category?: string;
+    rule?: string;
     count?: number;
-    message: string;
+    message?: string;
     solution?: string;
     learnMore?: string;
-    files: FileLocation[];
+    files?: FileLocation[];
+    file?: string;
+    line?: number;
 }
 
 export interface ScanData {
-    score: number;
-    diagnostics: Diagnostic[];
+    score?: number;
+    diagnostics?: Diagnostic[];
 }
 
 /* ──────────────────────────── Score Ring ──────────────────────────── */
@@ -129,7 +131,7 @@ function StatCard({ label, count, icon: Icon, accentBg, accentBorder, accentText
 /* ──────────────────────────── Category Helpers ──────────────────────────── */
 
 function getCategoryStyle(category: string) {
-    const cat = category.toLowerCase();
+    const cat = (category || '').toLowerCase();
     if (cat.includes('bug'))
         return { bg: 'bg-rose-500/15', border: 'border-rose-500/20', text: 'text-rose-400', icon: ShieldAlert };
     if (cat.includes('accessibility') || cat.includes('a11y'))
@@ -144,27 +146,58 @@ function getCategoryStyle(category: string) {
 export default function ScanResults({ data }: { data: ScanData | null }) {
     const [filter, setFilter] = useState<'all' | 'error' | 'warning'>('all');
 
-    if (!data || !Array.isArray(data.diagnostics)) return null;
+    // ── Normalize diagnostics to guarantee unique keys & robust file/solution handling ──
+    const normalizedDiagnostics = useMemo(() => {
+        if (!data || !Array.isArray(data.diagnostics)) return [];
 
-    const errors = data.diagnostics.filter(d => d.severity === 'error');
-    const warnings = data.diagnostics.filter(d => d.severity === 'warning');
+        return data.diagnostics.map((d, idx) => {
+            const uniqueId = d.id || `diag-${idx}-${d.rule || 'rule'}`;
+            const sev = (d.severity === 'error' || d.severity === 'warning') ? d.severity : 'warning';
+            
+            // Handle both grouped verbose format (`files: []`) and legacy format (`file`, `line`)
+            let filesList: FileLocation[] = [];
+            if (Array.isArray(d.files) && d.files.length > 0) {
+                filesList = d.files;
+            } else if (d.file) {
+                filesList = [{ file: d.file, line: d.line }];
+            }
 
-    const displayedDiagnostics = data.diagnostics.filter(d =>
+            return {
+                id: uniqueId,
+                severity: sev,
+                category: d.category || 'General',
+                rule: d.rule || 'React Best Practices',
+                count: d.count ?? (filesList.length > 0 ? filesList.length : 1),
+                message: d.message || 'Potential improvement identified in code structure.',
+                solution: d.solution || '',
+                learnMore: d.learnMore || '',
+                files: filesList,
+            };
+        });
+    }, [data]);
+
+    if (!data) return null;
+
+    const score = typeof data.score === 'number' ? data.score : 0;
+    const errors = normalizedDiagnostics.filter(d => d.severity === 'error');
+    const warnings = normalizedDiagnostics.filter(d => d.severity === 'warning');
+
+    const displayedDiagnostics = normalizedDiagnostics.filter(d =>
         filter === 'all' ? true : d.severity === filter
     );
 
-    // Category counts using the count field from verbose parser
+    // Category counts calculation
     const categoryCounts = useMemo(() => {
         const counts = { bugs: 0, accessibility: 0, maintainability: 0 };
-        data.diagnostics.forEach(d => {
-            const cat = d.category?.toLowerCase() || '';
+        normalizedDiagnostics.forEach(d => {
+            const cat = d.category.toLowerCase();
             const n = d.count || 1;
             if (cat.includes('bug')) counts.bugs += n;
             else if (cat.includes('accessibility') || cat.includes('a11y')) counts.accessibility += n;
             else if (cat.includes('maintain') || cat.includes('quality') || cat.includes('style')) counts.maintainability += n;
         });
         return counts;
-    }, [data.diagnostics]);
+    }, [normalizedDiagnostics]);
 
     const totalIssues = categoryCounts.bugs + categoryCounts.accessibility + categoryCounts.maintainability;
 
@@ -177,7 +210,7 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
                     {/* Score Ring */}
                     <div className="flex flex-col items-center gap-3">
                         <h2 className="text-sm font-semibold uppercase tracking-widest text-zinc-500 mb-2">Codebase Health</h2>
-                        <ScoreRing score={data.score ?? 0} />
+                        <ScoreRing score={score} />
                     </div>
 
                     {/* Category Breakdown */}
@@ -227,7 +260,7 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
             </section>
 
             {/* ═══════════════════ React Compiler Success ═══════════════════ */}
-            {errors.length === 0 && data.diagnostics.length === 0 && (
+            {normalizedDiagnostics.length === 0 && (
                 <div className="bg-indigo-500/10 border border-indigo-500/30 rounded-xl p-6 flex items-start gap-4">
                     <CheckCircle2 className="w-8 h-8 text-indigo-400 shrink-0 mt-1" />
                     <div>
@@ -253,7 +286,7 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
                     >
                         {type.charAt(0).toUpperCase() + type.slice(1)}
                         <span className="ml-2 opacity-50">
-                            ({type === 'all' ? data.diagnostics.length : type === 'error' ? errors.length : warnings.length})
+                            ({type === 'all' ? normalizedDiagnostics.length : type === 'error' ? errors.length : warnings.length})
                         </span>
                     </button>
                 ))}
@@ -263,7 +296,6 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
             <div className="space-y-5">
                 {displayedDiagnostics.map((issue) => {
                     const catStyle = getCategoryStyle(issue.category);
-                    const CatIcon = catStyle.icon;
 
                     return (
                         <div
@@ -286,7 +318,7 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
                                             {issue.category}
                                         </span>
                                         {/* Issue count badge */}
-                                        {(issue.count ?? 1) > 1 && (
+                                        {issue.count > 1 && (
                                             <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-400 border border-zinc-700">
                                                 ×{issue.count}
                                             </span>
@@ -309,7 +341,7 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
                             )}
 
                             {/* ── Actionable Solution Block ── */}
-                            {issue.solution && (
+                            {issue.solution ? (
                                 <div className="mx-5 mb-4 ml-14 p-4 rounded-lg bg-emerald-500/[0.07] border border-emerald-500/20 flex items-start gap-3">
                                     <div className="mt-0.5 shrink-0">
                                         <Lightbulb size={16} className="text-emerald-400" />
@@ -323,17 +355,22 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
                                         </p>
                                     </div>
                                 </div>
+                            ) : (
+                                <div className="mx-5 mb-4 ml-14 p-3 rounded-lg bg-zinc-900/60 border border-zinc-800/80 flex items-center gap-2 text-xs text-zinc-500">
+                                    <Lightbulb size={14} className="text-zinc-600 shrink-0" />
+                                    <span>Review the rule documentation below for specific implementation advice.</span>
+                                </div>
                             )}
 
                             {/* ── Affected Files ── */}
                             {issue.files && issue.files.length > 0 && (
                                 <div className="mx-5 mb-4 ml-14">
                                     <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-2">
-                                        Affected Files
+                                        Affected Files ({issue.files.length})
                                     </span>
                                     <div className="space-y-1.5">
                                         {issue.files.map((f, i) => (
-                                            <div key={i} className="flex items-center gap-2 text-xs font-mono bg-zinc-900/80 border border-zinc-800/60 rounded-lg px-3 py-2">
+                                            <div key={`${f.file}-${f.line || 0}-${i}`} className="flex items-center gap-2 text-xs font-mono bg-zinc-900/80 border border-zinc-800/60 rounded-lg px-3 py-2">
                                                 <FileCode size={13} className="text-zinc-600 shrink-0" />
                                                 <span className="text-zinc-300 truncate">{f.file}</span>
                                                 {f.line !== undefined && f.line > 0 && (
@@ -360,7 +397,7 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
                                         rel="noopener noreferrer"
                                         className="inline-flex items-center gap-1.5 text-xs text-indigo-400/80 hover:text-indigo-300 transition-colors font-medium"
                                     >
-                                        Learn more
+                                        Learn more about this rule
                                         <ExternalLink size={11} />
                                     </a>
                                 </div>
