@@ -235,13 +235,13 @@ function ReportContent() {
       } catch (e) {
         console.warn('Failed to cache scan result in sessionStorage:', e);
       }
+      setIsLoading(false);
     } catch (err: unknown) {
       const message =
         err instanceof Error
           ? err.message
           : 'Unable to reach the analysis server. Is the backend running?';
       setError(message);
-    } finally {
       setIsLoading(false);
     }
   };
