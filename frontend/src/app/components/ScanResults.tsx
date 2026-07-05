@@ -235,17 +235,7 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
         });
     }, [data]);
 
-    if (!data) return null;
-
-    const score = typeof data.score === 'number' ? data.score : 0;
-    const errors = normalizedDiagnostics.filter(d => d.severity === 'error');
-    const warnings = normalizedDiagnostics.filter(d => d.severity === 'warning');
-
-    const displayedDiagnostics = normalizedDiagnostics.filter(d =>
-        filter === 'all' ? true : d.severity === filter
-    );
-
-    // Category counts calculation
+    // Category counts calculation (must be called before any early return to satisfy Rules of Hooks)
     const categoryCounts = useMemo(() => {
         const counts = { bugs: 0, accessibility: 0, maintainability: 0, performance: 0 };
         normalizedDiagnostics.forEach(d => {
@@ -258,6 +248,16 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
         });
         return counts;
     }, [normalizedDiagnostics]);
+
+    if (!data) return null;
+
+    const score = typeof data.score === 'number' ? data.score : 0;
+    const errors = normalizedDiagnostics.filter(d => d.severity === 'error');
+    const warnings = normalizedDiagnostics.filter(d => d.severity === 'warning');
+
+    const displayedDiagnostics = normalizedDiagnostics.filter(d =>
+        filter === 'all' ? true : d.severity === filter
+    );
 
     const totalIssues = categoryCounts.bugs + categoryCounts.accessibility + categoryCounts.maintainability + categoryCounts.performance;
 
