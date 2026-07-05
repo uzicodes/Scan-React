@@ -72,6 +72,7 @@ export default function ScanForm({ isLoading = false, onScan }: ScanFormProps) {
 
         <button
           id="start-scan-button"
+          type="button"
           onClick={handleScan}
           disabled={!isValidUrl || isLoading}
           aria-label="Start scan"

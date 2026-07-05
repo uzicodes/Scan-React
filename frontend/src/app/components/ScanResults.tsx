@@ -178,6 +178,7 @@ function AskAIButton({ issue }: { issue: any }) {
 
     return (
         <button
+            type="button"
             onClick={handleCopy}
             title="Copy micro-prompt for AI"
             className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-lg transition-all duration-200 shadow-sm ${copied
@@ -344,6 +345,7 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
                 {(['all', 'error', 'warning'] as const).map((type) => (
                     <button
                         key={type}
+                        type="button"
                         onClick={() => setFilter(type)}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === type
                             ? 'bg-zinc-800 text-zinc-100'
