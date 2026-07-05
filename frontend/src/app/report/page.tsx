@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams, useRouter, redirect } from 'next/navigation';
 import Link from 'next/link';
 import {
   Terminal,
@@ -184,6 +184,9 @@ function ReportContent() {
   const router = useRouter();
 
   const repoUrl = searchParams.get('url');
+  if (!repoUrl) {
+    redirect('/');
+  }
 
   const [scanData, setScanData] = useState<ScanData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -233,10 +236,6 @@ function ReportContent() {
   // Kick off the scan as soon as the page loads (or restore from sessionStorage on refresh)
   const hasFetched = useRef(false);
   useEffect(() => {
-    if (!repoUrl) {
-      router.replace('/');
-      return;
-    }
     if (hasFetched.current) return;
     hasFetched.current = true;
 
