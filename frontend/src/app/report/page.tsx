@@ -107,9 +107,9 @@ function TerminalLoader({ repoUrl }: { repoUrl: string }) {
 
         {/* Terminal body */}
         <div className="p-5 font-mono text-sm leading-relaxed min-h-[200px] space-y-1.5">
-          {lines.map((line, idx) => (
+          {lines.map((line) => (
             <div
-              key={idx}
+              key={line.text}
               className={`animate-fade-in-up ${
                 line.type === 'success'
                   ? 'text-emerald-400'
