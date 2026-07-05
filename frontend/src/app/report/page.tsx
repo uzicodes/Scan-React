@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef, useMemo, Suspense } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -25,15 +25,8 @@ interface TerminalLine {
 /* ──────────────────────────── Terminal Loader ──────────────────────────── */
 
 function TerminalLoader({ repoUrl }: { repoUrl: string }) {
-  const repoName = useMemo(
-    () => repoUrl.replace(/^https?:\/\/(www\.)?github\.com\//, ''),
-    [repoUrl]
-  );
-
-  const initialLines = useMemo<TerminalLine[]>(
-    () => [{ text: `$ scanreact analyze ${repoName}`, type: 'dimmed' }],
-    [repoName]
-  );
+  const repoName = repoUrl.replace(/^https?:\/\/(www\.)?github\.com\//, '');
+  const initialLines: TerminalLine[] = [{ text: `$ scanreact analyze ${repoName}`, type: 'dimmed' }];
 
   const [phase, setPhase] = useState<Phase>('cloning');
   const [lines, setLines] = useState<TerminalLine[]>(initialLines);
@@ -196,7 +189,7 @@ function ReportContent() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const runScan = useCallback(async (githubUrl: string) => {
+  const runScan = async (githubUrl: string) => {
     setIsLoading(true);
     setError(null);
     setScanData(null);
@@ -235,7 +228,7 @@ function ReportContent() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  };
 
   // Kick off the scan as soon as the page loads (or restore from sessionStorage on refresh)
   const hasFetched = useRef(false);

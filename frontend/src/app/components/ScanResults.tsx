@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import {
     AlertTriangle,
     CheckCircle2,
@@ -206,10 +206,9 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
     const [filter, setFilter] = useState<'all' | 'error' | 'warning'>('all');
 
     // ── Normalize diagnostics to guarantee unique keys & robust file/solution handling ──
-    const normalizedDiagnostics = useMemo(() => {
-        if (!data || !Array.isArray(data.diagnostics)) return [];
-
-        return data.diagnostics.map((d, idx) => {
+    const normalizedDiagnostics = (!data || !Array.isArray(data.diagnostics))
+        ? []
+        : data.diagnostics.map((d, idx) => {
             const uniqueId = d.id || `diag-${idx}-${d.rule || 'rule'}`;
             const sev = (d.severity === 'error' || d.severity === 'warning') ? d.severity : 'warning';
 
@@ -233,21 +232,17 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
                 files: filesList,
             };
         });
-    }, [data]);
 
-    // Category counts calculation (must be called before any early return to satisfy Rules of Hooks)
-    const categoryCounts = useMemo(() => {
-        const counts = { bugs: 0, accessibility: 0, maintainability: 0, performance: 0 };
-        normalizedDiagnostics.forEach(d => {
-            const cat = d.category.toLowerCase();
-            const n = d.count || 1;
-            if (cat.includes('bug')) counts.bugs += n;
-            else if (cat.includes('accessibility') || cat.includes('a11y')) counts.accessibility += n;
-            else if (cat.includes('maintain') || cat.includes('quality') || cat.includes('style')) counts.maintainability += n;
-            else if (cat.includes('performance') || cat.includes('perf')) counts.performance += n;
-        });
-        return counts;
-    }, [normalizedDiagnostics]);
+    // Category counts calculation
+    const categoryCounts = { bugs: 0, accessibility: 0, maintainability: 0, performance: 0 };
+    normalizedDiagnostics.forEach(d => {
+        const cat = d.category.toLowerCase();
+        const n = d.count || 1;
+        if (cat.includes('bug')) categoryCounts.bugs += n;
+        else if (cat.includes('accessibility') || cat.includes('a11y')) categoryCounts.accessibility += n;
+        else if (cat.includes('maintain') || cat.includes('quality') || cat.includes('style')) categoryCounts.maintainability += n;
+        else if (cat.includes('performance') || cat.includes('perf')) categoryCounts.performance += n;
+    });
 
     if (!data) return null;
 
