@@ -32,6 +32,9 @@ export default function Home() {
   const router = useRouter();
 
   const handleScan = (githubUrl: string) => {
+    try {
+      sessionStorage.removeItem(`scan_result_${githubUrl}`);
+    } catch (e) {}
     const encoded = encodeURIComponent(githubUrl);
     router.push(`/report?url=${encoded}`);
   };

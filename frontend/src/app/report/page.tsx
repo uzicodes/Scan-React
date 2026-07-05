@@ -171,6 +171,9 @@ function ErrorCard({ message }: { message: string }) {
         </p>
         <Link
           href="/"
+          onClick={() => {
+            try { sessionStorage.clear(); } catch (e) {}
+          }}
           className="inline-flex items-center gap-2 px-6 py-3 bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold rounded-xl transition-all duration-300 shadow-lg shadow-violet-600/20 hover:shadow-violet-500/30 active:scale-[0.97]"
         >
           <ArrowLeft size={16} />
@@ -218,6 +221,11 @@ function ReportContent() {
       const result = await response.json();
       const parsed: ScanData = result.data || result;
       setScanData(parsed);
+      try {
+        sessionStorage.setItem(`scan_result_${githubUrl}`, JSON.stringify(parsed));
+      } catch (e) {
+        console.warn('Failed to cache scan result in sessionStorage:', e);
+      }
     } catch (err: unknown) {
       const message =
         err instanceof Error
@@ -229,7 +237,7 @@ function ReportContent() {
     }
   }, []);
 
-  // Kick off the scan as soon as the page loads
+  // Kick off the scan as soon as the page loads (or restore from sessionStorage on refresh)
   const hasFetched = useRef(false);
   useEffect(() => {
     if (!repoUrl) {
@@ -238,6 +246,19 @@ function ReportContent() {
     }
     if (hasFetched.current) return;
     hasFetched.current = true;
+
+    // Check sessionStorage first to prevent re-scanning on page refresh
+    try {
+      const cached = sessionStorage.getItem(`scan_result_${repoUrl}`);
+      if (cached) {
+        const parsed: ScanData = JSON.parse(cached);
+        setScanData(parsed);
+        setIsLoading(false);
+        return;
+      }
+    } catch (e) {
+      console.warn('Failed to load cached scan result from sessionStorage:', e);
+    }
 
     // Use a microtask to satisfy the react-hooks/set-state-in-effect rule
     const controller = new AbortController();
@@ -260,6 +281,9 @@ function ReportContent() {
       <div className="w-full max-w-5xl mx-auto mb-10 animate-fade-in-up">
         <Link
           href="/"
+          onClick={() => {
+            try { sessionStorage.removeItem(`scan_result_${repoUrl}`); } catch (e) {}
+          }}
           className="inline-flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors mb-4"
         >
           <ArrowLeft size={14} />
