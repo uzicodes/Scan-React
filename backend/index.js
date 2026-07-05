@@ -43,7 +43,7 @@ app.post('/api/scan', async (req, res) => {
         let rawOutput = "";
         try {
             // Run the tool in verbose mode for score + solutions
-            const { stdout } = await execPromise(`npx react-doctor@latest --verbose`, { cwd: targetDir });
+            const { stdout } = await execPromise(`npx --no-install react-doctor --verbose`, { cwd: targetDir });
             rawOutput = stdout;
         } catch (linterError) {
             // If react-doctor finds errors, it exits with a non-zero code.
