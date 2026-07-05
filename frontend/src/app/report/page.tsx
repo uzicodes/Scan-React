@@ -193,6 +193,19 @@ function ReportContent() {
   const [error, setError] = useState<string | null>(null);
 
   const runScan = async (githubUrl: string) => {
+    // Check sessionStorage first to prevent re-scanning on page refresh
+    try {
+      const cached = sessionStorage.getItem(`scan_result_${githubUrl}`);
+      if (cached) {
+        const parsed: ScanData = JSON.parse(cached);
+        setScanData(parsed);
+        setIsLoading(false);
+        return;
+      }
+    } catch (e) {
+      console.warn('Failed to load cached scan result from sessionStorage:', e);
+    }
+
     setIsLoading(true);
     setError(null);
     setScanData(null);
@@ -239,27 +252,14 @@ function ReportContent() {
     if (hasFetched.current) return;
     hasFetched.current = true;
 
-    // Check sessionStorage first to prevent re-scanning on page refresh
-    try {
-      const cached = sessionStorage.getItem(`scan_result_${repoUrl}`);
-      if (cached) {
-        const parsed: ScanData = JSON.parse(cached);
-        setScanData(parsed);
-        setIsLoading(false);
-        return;
-      }
-    } catch (e) {
-      console.warn('Failed to load cached scan result from sessionStorage:', e);
-    }
-
-    // Use a microtask to satisfy the react-hooks/set-state-in-effect rule
+    // Use an async microtask/controller to satisfy React Compiler & prevent cascading renders
     const controller = new AbortController();
     (async () => {
       if (controller.signal.aborted) return;
       await runScan(repoUrl);
     })();
     return () => controller.abort();
-  }, [repoUrl, runScan, router]);
+  }, [repoUrl]);
 
   // Guard: no URL → redirect handled above, show nothing while redirecting
   if (!repoUrl) return null;
