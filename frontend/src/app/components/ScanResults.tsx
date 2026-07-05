@@ -42,8 +42,8 @@ export interface ScanData {
 /* ──────────────────────────── Score Ring ──────────────────────────── */
 
 function ScoreRing({ score }: { score: number }) {
-    const radius = 80;
-    const stroke = 10;
+    const radius = 58;
+    const stroke = 8;
     const normalizedRadius = radius - stroke / 2;
     const circumference = 2 * Math.PI * normalizedRadius;
     const offset = circumference - (score / 100) * circumference;
@@ -93,11 +93,11 @@ function ScoreRing({ score }: { score: number }) {
                 />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ animation: 'count-up 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.4s both' }}>
-                <span className={`text-5xl font-bold tracking-tight ${color.text}`}>
+                <span className={`text-3xl sm:text-4xl font-bold tracking-tight ${color.text}`}>
                     {score}
                 </span>
-                <span className="text-zinc-500 text-xs font-medium mt-0.5">/ 100</span>
-                <span className={`text-[10px] font-semibold uppercase tracking-widest mt-1 ${color.text} opacity-80`}>
+                <span className="text-zinc-500 text-[10px] font-medium -mt-0.5">/ 100</span>
+                <span className={`text-[9px] font-bold uppercase tracking-widest mt-0.5 ${color.text} opacity-90`}>
                     {color.label}
                 </span>
             </div>
@@ -116,13 +116,13 @@ function StatCard({ label, count, icon: Icon, accentBg, accentBorder, accentText
     accentText: string;
 }) {
     return (
-        <div className={`${accentBg} ${accentBorder} border rounded-xl px-5 py-4 flex items-center gap-4 min-w-[150px] transition-all duration-300 hover:scale-[1.02]`}>
-            <div className={`w-10 h-10 rounded-lg ${accentBg} flex items-center justify-center`}>
-                <Icon size={20} className={accentText} />
+        <div className={`${accentBg} ${accentBorder} border rounded-xl p-3.5 sm:p-4 flex items-center gap-3.5 flex-1 min-w-[130px] transition-all duration-300 hover:scale-[1.02] hover:shadow-lg`}>
+            <div className={`w-9 h-9 rounded-lg ${accentBg} flex items-center justify-center shrink-0`}>
+                <Icon size={18} className={accentText} />
             </div>
-            <div>
-                <span className={`text-2xl font-bold block leading-none ${accentText}`}>{count}</span>
-                <span className="text-zinc-400 text-xs font-medium mt-0.5 block">{label}</span>
+            <div className="min-w-0">
+                <span className={`text-xl sm:text-2xl font-bold block leading-none ${accentText}`}>{count}</span>
+                <span className="text-zinc-400 text-[11px] sm:text-xs font-medium mt-1 block truncate">{label}</span>
             </div>
         </div>
     );
@@ -153,7 +153,7 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
         return data.diagnostics.map((d, idx) => {
             const uniqueId = d.id || `diag-${idx}-${d.rule || 'rule'}`;
             const sev = (d.severity === 'error' || d.severity === 'warning') ? d.severity : 'warning';
-            
+
             // Handle both grouped verbose format (`files: []`) and legacy format (`file`, `line`)
             let filesList: FileLocation[] = [];
             if (Array.isArray(d.files) && d.files.length > 0) {
@@ -205,16 +205,19 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
         <div className="w-full max-w-5xl mx-auto mt-12 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
             {/* ═══════════════════ 1. Hero Scorecard ═══════════════════ */}
-            <section className="bg-zinc-950/80 border border-zinc-800/80 rounded-2xl p-8 md:p-10 shadow-2xl shadow-indigo-500/5 backdrop-blur-xl">
-                <div className="flex flex-col md:flex-row items-center justify-between gap-8">
+            <section className="bg-zinc-950/80 border border-zinc-800/80 rounded-2xl p-5 sm:p-6 md:p-7 shadow-2xl shadow-indigo-500/5 backdrop-blur-xl">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8">
                     {/* Score Ring */}
-                    <div className="flex flex-col items-center gap-3">
-                        <h2 className="text-sm font-semibold uppercase tracking-widest text-zinc-500 mb-2">Codebase Health</h2>
+                    <div className="flex flex-col items-center gap-2 shrink-0">
+                        <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-400">Codebase Health</h2>
                         <ScoreRing score={score} />
                     </div>
 
+                    {/* Subtle divider on desktop */}
+                    <div className="hidden md:block w-px h-24 bg-gradient-to-b from-transparent via-zinc-800 to-transparent shrink-0" />
+
                     {/* Category Breakdown */}
-                    <div className="flex flex-col gap-3 w-full md:w-auto">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 w-full md:flex-1">
                         <StatCard
                             label="Bugs"
                             count={categoryCounts.bugs}
@@ -243,7 +246,7 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
                 </div>
 
                 {/* Summary bar */}
-                <div className="mt-6 pt-5 border-t border-zinc-800/60 flex items-center justify-center gap-6 text-sm">
+                <div className="mt-5 pt-4 border-t border-zinc-800/60 flex flex-wrap items-center justify-center gap-6 text-xs sm:text-sm">
                     <div className="flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-violet-500" />
                         <span className="text-zinc-400"><span className="text-zinc-200 font-semibold">{totalIssues}</span> Total Issues</span>
@@ -280,8 +283,8 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
                         key={type}
                         onClick={() => setFilter(type)}
                         className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === type
-                                ? 'bg-zinc-800 text-zinc-100'
-                                : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
+                            ? 'bg-zinc-800 text-zinc-100'
+                            : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/50'
                             }`}
                     >
                         {type.charAt(0).toUpperCase() + type.slice(1)}
@@ -302,33 +305,48 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
                             key={issue.id}
                             className="bg-zinc-950/80 border border-zinc-800/80 rounded-xl overflow-hidden shadow-lg shadow-black/20 backdrop-blur-sm transition-all duration-300 hover:border-zinc-700/80 hover:shadow-xl"
                         >
-                            {/* ── Card Header: Category + Rule Name ── */}
-                            <div className="p-5 pb-4 flex items-start gap-4">
-                                <div className="mt-0.5 shrink-0">
-                                    {issue.severity === 'error' ? (
-                                        <ShieldAlert className="w-5 h-5 text-rose-500" />
-                                    ) : (
-                                        <AlertTriangle className="w-5 h-5 text-amber-500" />
-                                    )}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-3 mb-2 flex-wrap">
-                                        {/* Category badge */}
-                                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md ${catStyle.bg} ${catStyle.text} border ${catStyle.border}`}>
-                                            {issue.category}
-                                        </span>
-                                        {/* Issue count badge */}
-                                        {issue.count > 1 && (
-                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-400 border border-zinc-700">
-                                                ×{issue.count}
-                                            </span>
+                            {/* ── Card Header: Category + Rule Name + Learn More Link ── */}
+                            <div className="p-5 pb-4 flex items-start justify-between gap-4">
+                                <div className="flex items-start gap-4 flex-1 min-w-0">
+                                    <div className="mt-0.5 shrink-0">
+                                        {issue.severity === 'error' ? (
+                                            <ShieldAlert className="w-5 h-5 text-rose-500" />
+                                        ) : (
+                                            <AlertTriangle className="w-5 h-5 text-amber-500" />
                                         )}
                                     </div>
-                                    {/* Rule name as title */}
-                                    <h3 className="text-zinc-100 font-semibold text-base leading-snug">
-                                        {issue.rule}
-                                    </h3>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-3 mb-2 flex-wrap">
+                                            {/* Category badge */}
+                                            <span className={`text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md ${catStyle.bg} ${catStyle.text} border ${catStyle.border}`}>
+                                                {issue.category}
+                                            </span>
+                                            {/* Issue count badge */}
+                                            {issue.count > 1 && (
+                                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-400 border border-zinc-700">
+                                                    ×{issue.count}
+                                                </span>
+                                            )}
+                                        </div>
+                                        {/* Rule name as title */}
+                                        <h3 className="text-zinc-100 font-semibold text-base leading-snug">
+                                            {issue.rule}
+                                        </h3>
+                                    </div>
                                 </div>
+
+                                {/* ── Learn More Link ── */}
+                                {issue.learnMore && (
+                                    <a
+                                        href={issue.learnMore}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="shrink-0 inline-flex items-center gap-1.5 text-xs text-indigo-400/80 hover:text-indigo-300 transition-colors font-medium mt-1"
+                                    >
+                                        Learn more about this rule
+                                        <ExternalLink size={11} />
+                                    </a>
+                                )}
                             </div>
 
                             {/* ── Description / Problem ── */}
@@ -358,7 +376,7 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
                             ) : (
                                 <div className="mx-5 mb-4 ml-14 p-3 rounded-lg bg-zinc-900/60 border border-zinc-800/80 flex items-center gap-2 text-xs text-zinc-500">
                                     <Lightbulb size={14} className="text-zinc-600 shrink-0" />
-                                    <span>Review the rule documentation below for specific implementation advice.</span>
+                                    <span>Review the rule documentation for specific implementation advice.</span>
                                 </div>
                             )}
 
@@ -385,21 +403,6 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
                                             </div>
                                         ))}
                                     </div>
-                                </div>
-                            )}
-
-                            {/* ── Learn More Link ── */}
-                            {issue.learnMore && (
-                                <div className="px-5 pb-4 pl-14 border-t border-zinc-800/30 pt-3">
-                                    <a
-                                        href={issue.learnMore}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-flex items-center gap-1.5 text-xs text-indigo-400/80 hover:text-indigo-300 transition-colors font-medium"
-                                    >
-                                        Learn more about this rule
-                                        <ExternalLink size={11} />
-                                    </a>
                                 </div>
                             )}
                         </div>
