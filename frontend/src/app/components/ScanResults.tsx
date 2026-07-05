@@ -136,8 +136,10 @@ function getCategoryStyle(category: string) {
         return { bg: 'bg-rose-500/15', border: 'border-rose-500/20', text: 'text-rose-400', icon: ShieldAlert };
     if (cat.includes('accessibility') || cat.includes('a11y'))
         return { bg: 'bg-amber-500/15', border: 'border-amber-500/20', text: 'text-amber-400', icon: Eye };
-    if (cat.includes('maintain'))
-        return { bg: 'bg-indigo-500/15', border: 'border-indigo-500/20', text: 'text-indigo-400', icon: Wrench };
+    if (cat.includes('maintain') || cat.includes('quality') || cat.includes('style'))
+        return { bg: 'bg-[#469be0]/15', border: 'border-[#469be0]/30', text: 'text-[#469be0]', icon: Wrench };
+    if (cat.includes('performance') || cat.includes('perf'))
+        return { bg: 'bg-[#f241a0]/15', border: 'border-[#f241a0]/30', text: 'text-[#f241a0]', icon: Lightbulb };
     return { bg: 'bg-zinc-500/15', border: 'border-zinc-500/20', text: 'text-zinc-400', icon: AlertTriangle };
 }
 
@@ -188,18 +190,19 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
 
     // Category counts calculation
     const categoryCounts = useMemo(() => {
-        const counts = { bugs: 0, accessibility: 0, maintainability: 0 };
+        const counts = { bugs: 0, accessibility: 0, maintainability: 0, performance: 0 };
         normalizedDiagnostics.forEach(d => {
             const cat = d.category.toLowerCase();
             const n = d.count || 1;
             if (cat.includes('bug')) counts.bugs += n;
             else if (cat.includes('accessibility') || cat.includes('a11y')) counts.accessibility += n;
             else if (cat.includes('maintain') || cat.includes('quality') || cat.includes('style')) counts.maintainability += n;
+            else if (cat.includes('performance') || cat.includes('perf')) counts.performance += n;
         });
         return counts;
     }, [normalizedDiagnostics]);
 
-    const totalIssues = categoryCounts.bugs + categoryCounts.accessibility + categoryCounts.maintainability;
+    const totalIssues = categoryCounts.bugs + categoryCounts.accessibility + categoryCounts.maintainability + categoryCounts.performance;
 
     return (
         <div className="w-full max-w-5xl mx-auto mt-12 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -217,7 +220,7 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
                     <div className="hidden md:block w-px h-24 bg-gradient-to-b from-transparent via-zinc-800 to-transparent shrink-0" />
 
                     {/* Category Breakdown */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 w-full md:flex-1">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5 w-full md:flex-1">
                         <StatCard
                             label="Bugs"
                             count={categoryCounts.bugs}
@@ -238,9 +241,17 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
                             label="Maintainability"
                             count={categoryCounts.maintainability}
                             icon={Wrench}
-                            accentBg="bg-indigo-500/10"
-                            accentBorder="border-indigo-500/20"
-                            accentText="text-indigo-400"
+                            accentBg="bg-[#469be0]/15"
+                            accentBorder="border-[#469be0]/30"
+                            accentText="text-[#469be0]"
+                        />
+                        <StatCard
+                            label="Performance"
+                            count={categoryCounts.performance}
+                            icon={Lightbulb}
+                            accentBg="bg-[#f241a0]/15"
+                            accentBorder="border-[#f241a0]/30"
+                            accentText="text-[#f241a0]"
                         />
                     </div>
                 </div>
@@ -358,7 +369,7 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
                                 </div>
                             )}
 
-                            {/* ── Actionable Solution Block ── */}
+                            {/* ── Actionable Solution ── */}
                             {issue.solution ? (
                                 <div className="mx-5 mb-4 ml-14 p-4 rounded-lg bg-emerald-500/[0.07] border border-emerald-500/20 flex items-start gap-3">
                                     <div className="mt-0.5 shrink-0">
@@ -394,8 +405,8 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
                                                 {f.line !== undefined && f.line > 0 && (
                                                     <>
                                                         <span className="text-zinc-600">:</span>
-                                                        <span className="flex items-center gap-0.5 text-indigo-400 font-semibold">
-                                                            <Hash size={10} className="text-indigo-500/60" />
+                                                        <span className="flex items-center gap-0.5 text-[#f58291] font-medium">
+                                                            <Hash size={10} className="text-[#f2d0d5]/70" />
                                                             {f.line}
                                                         </span>
                                                     </>
