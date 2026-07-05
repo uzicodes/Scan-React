@@ -11,6 +11,8 @@ import {
     Eye,
     ExternalLink,
     Hash,
+    Sparkles,
+    Check,
 } from 'lucide-react';
 
 /* ──────────────────────────── Types ──────────────────────────── */
@@ -141,6 +143,61 @@ function getCategoryStyle(category: string) {
     if (cat.includes('performance') || cat.includes('perf'))
         return { bg: 'bg-[#f241a0]/15', border: 'border-[#f241a0]/30', text: 'text-[#f241a0]', icon: Lightbulb };
     return { bg: 'bg-zinc-500/15', border: 'border-zinc-500/20', text: 'text-zinc-400', icon: AlertTriangle };
+}
+
+/* ──────────────────────────── Micro-Prompt Helpers ──────────────────────────── */
+
+function generateSingleAIPrompt(issue: any): string {
+    const filesText = issue.files && issue.files.length > 0
+        ? issue.files.map((f: FileLocation) => `- ${f.file}${f.line ? ` (Line ${f.line})` : ''}`).join('\n')
+        : 'N/A';
+
+    return `Act as a senior React TypeScript expert specializing in React 19 and the React Compiler.
+I need help fixing the following code quality / React Compiler compatibility issue in my codebase:
+
+Rule / Issue: ${issue.rule} (${issue.category.toUpperCase()} - ${issue.severity.toUpperCase()})
+Problem Description:
+${issue.message || 'No description provided.'}
+
+${issue.solution ? `Recommended Fix:\n${issue.solution}\n` : ''}
+Affected Files & Lines:
+${filesText}
+
+Please explain why this issue happens in the context of modern React / React Compiler, and provide clean, production-ready code examples demonstrating how to refactor and resolve it in the affected files.`;
+}
+
+function AskAIButton({ issue }: { issue: any }) {
+    const [copied, setCopied] = useState(false);
+
+    const handleCopy = () => {
+        const prompt = generateSingleAIPrompt(issue);
+        navigator.clipboard.writeText(prompt);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
+    return (
+        <button
+            onClick={handleCopy}
+            title="Copy micro-prompt for AI"
+            className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-lg transition-all duration-200 shadow-sm ${copied
+                ? 'bg-emerald-500/25 text-emerald-300 border border-emerald-500/40'
+                : 'bg-zinc-900/80 border border-zinc-800 text-zinc-300 hover:bg-emerald-500/20 hover:border-emerald-500/30 hover:text-emerald-400'
+                }`}
+        >
+            {copied ? (
+                <>
+                    <Check size={13} className="text-emerald-400 shrink-0" />
+                    <span>Copied Prompt</span>
+                </>
+            ) : (
+                <>
+                    <Sparkles size={13} className="shrink-0" />
+                    <span>Ask AI</span>
+                </>
+            )}
+        </button>
+    );
 }
 
 /* ──────────────────────────── Main Component ──────────────────────────── */
@@ -346,18 +403,21 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
                                     </div>
                                 </div>
 
-                                {/* ── Learn More Link ── */}
-                                {issue.learnMore && (
-                                    <a
-                                        href={issue.learnMore}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="shrink-0 inline-flex items-center gap-1.5 text-xs text-indigo-400/80 hover:text-indigo-300 transition-colors font-medium mt-1"
-                                    >
-                                        Learn more about this rule
-                                        <ExternalLink size={11} />
-                                    </a>
-                                )}
+                                {/* ── Top-Right Actions: Ask AI + Learn More ── */}
+                                <div className="shrink-0 flex items-center gap-3 mt-0.5">
+                                    <AskAIButton issue={issue} />
+                                    {issue.learnMore && (
+                                        <a
+                                            href={issue.learnMore}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-flex items-center gap-1.5 text-xs text-indigo-400/80 hover:text-indigo-300 transition-colors font-medium"
+                                        >
+                                            Learn about this rule
+                                            <ExternalLink size={11} />
+                                        </a>
+                                    )}
+                                </div>
                             </div>
 
                             {/* ── Description / Problem ── */}
