@@ -208,7 +208,7 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
         <div className="w-full max-w-5xl mx-auto mt-12 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
             {/* ═══════════════════ 1. Hero Scorecard ═══════════════════ */}
-            <section className="bg-zinc-950/80 border border-zinc-800/80 rounded-2xl p-5 sm:p-6 md:p-7 shadow-2xl shadow-indigo-500/5 backdrop-blur-xl">
+            <section className="bg-zinc-950 border border-zinc-800/80 rounded-2xl p-5 sm:p-6 md:p-7 shadow-2xl shadow-indigo-500/5">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8">
                     {/* Score Ring */}
                     <div className="flex flex-col items-center gap-2 shrink-0">
@@ -314,7 +314,7 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
                     return (
                         <div
                             key={issue.id}
-                            className="bg-zinc-950/80 border border-zinc-800/80 rounded-xl overflow-hidden shadow-lg shadow-black/20 backdrop-blur-sm transition-all duration-300 hover:border-zinc-700/80 hover:shadow-xl"
+                            className="bg-zinc-950 border border-zinc-800/80 rounded-xl overflow-hidden shadow-lg shadow-black/20 transition-all duration-300 hover:border-zinc-700/80 hover:shadow-xl"
                         >
                             {/* ── Card Header: Category + Rule Name + Learn More Link ── */}
                             <div className="p-5 pb-4 flex items-start justify-between gap-4">

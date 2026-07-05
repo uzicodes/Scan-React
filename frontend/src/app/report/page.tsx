@@ -323,7 +323,7 @@ function ReportContent() {
 
 export default function ReportPage() {
   return (
-    <main className="relative flex flex-col items-center min-h-screen overflow-hidden">
+    <main className="relative flex flex-col items-center min-h-screen overflow-x-hidden">
       {/* Background */}
       <div className="fixed inset-0 bg-grid-pattern pointer-events-none" />
       <div className="fixed inset-0 bg-radial-glow pointer-events-none" />
