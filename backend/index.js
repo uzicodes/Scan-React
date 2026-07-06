@@ -69,25 +69,27 @@ app.post('/api/scan', async (req, res) => {
         // --depth 1 ensures we only download the latest code, saving massive time
         await execPromise(`git clone --depth 1 ${githubUrl} "${targetDir}"`);
 
-        console.log(`[2/3] Running react-doctor --verbose analysis...`);
+        console.log(`[2/3] Running react-doctor programmatic analysis via native API...`);
+        const { diagnose } = await import('react-doctor/api');
 
-        let rawOutput = "";
+        let diagnoseResult = null;
         try {
-            // Run the tool in verbose mode for score + solutions with V8 memory constraints and 50MB maxBuffer
-            const { stdout } = await execPromise(`cross-env NODE_OPTIONS="--max-old-space-size=250" npx --no-install react-doctor@latest --verbose`, { cwd: targetDir, maxBuffer: 1024 * 1024 * 50 });
-            rawOutput = stdout;
+            diagnoseResult = await diagnose(targetDir, { verbose: true });
         } catch (linterError) {
-            // If react-doctor finds errors, it exits with a non-zero code.
-            // We capture the output here because finding errors is the goal!
-            rawOutput = linterError.stdout || "";
+            // If react-doctor throws an error object containing diagnostics/result
+            if (linterError.diagnostics || linterError.result) {
+                diagnoseResult = linterError.result || linterError;
+            } else {
+                throw linterError;
+            }
         }
+
+        // ── Map API result to frontend schema ──
+        const parsedData = formatDiagnoseResult(diagnoseResult, targetDir);
 
         console.log(`[3/3] Analysis complete. Wiping temp directory...`);
         // Native Windows/Node method to safely delete the folder
         await fs.promises.rm(targetDir, { recursive: true, force: true });
-
-        // ── Parse verbose output ──
-        const parsedData = parseVerboseOutput(rawOutput);
 
         console.log(`--- SCAN COMPLETE (score: ${parsedData.score}, issues: ${parsedData.diagnostics.length}) ---\n`);
         return res.json({ success: true, data: parsedData });
@@ -112,196 +114,75 @@ app.post('/api/scan', async (req, res) => {
 });
 
 /**
- * Parse the raw verbose output from react-doctor into structured data.
- *
- * Actual react-doctor --verbose output format (v0.6.x):
- *
- *   ⚠ Bugs: useSearchParams without Suspense
- *     Learn more: https://react.doctor/docs/rules/...
- *     <ClientPage> uses useSearchParams() outside <Suspense>, so
- *     this page falls back to client-side rendering.
- *     → Wrap the component using `useSearchParams` in
- *     `<Suspense>` so the rest of the page can stay statically
- *     rendered.
- *
- *     app/login/page.tsx:16
- *
- *   ────────────────────────────────────────────────────────────
- *   All 6 issues
- *   Bugs › 1 warning
- *   ...
- *   ┌─────┐  81 / 100 Needs work
- *   │ ◠ ◠ │  ████████████████████░░░░░░░░░
- *   │  ▽  │  React Doctor (https://react.doctor)
+ * Map the structured result from react-doctor's native diagnose() API
+ * directly into our frontend JSON response schema.
  */
-function parseVerboseOutput(raw) {
-    if (!raw || typeof raw !== 'string') {
-        return { score: 0, diagnostics: [] };
+function formatDiagnoseResult(result, targetDir) {
+    if (!result || typeof result !== 'object') {
+        return { score: 100, diagnostics: [] };
     }
 
-    // Strip ANSI escape codes (color, bold, etc.)
-    const clean = raw.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '');
-    const lines = clean.split('\n');
+    const rawDiagnostics = Array.isArray(result.diagnostics) ? result.diagnostics : [];
 
-    // ── 1. Regex Hardening: Check entire output for score format first ──
-    let score = null;
-    const scoreMatch = clean.match(/(\d{1,3})\s*\/\s*100/);
-    if (scoreMatch) {
-        score = parseInt(scoreMatch[1], 10);
-    }
+    // Group diagnostics by rule to maintain clean frontend scorecard structure
+    const ruleGroups = new Map();
 
-    const groups = [];
-    let current = null;
+    for (const d of rawDiagnostics) {
+        const ruleKey = d.rule || d.title || 'general';
+        
+        // Clean up file path to be relative to the repository root and use forward slashes
+        let fileRel = 'unknown';
+        if (d.filePath) {
+            fileRel = path.isAbsolute(d.filePath)
+                ? path.relative(targetDir, d.filePath)
+                : d.filePath;
+            fileRel = fileRel.replace(/\\/g, '/');
+        }
 
-    // Phase tracks where we are inside a diagnostic block:
-    //   idle → header found → meta (learn more) → description → solution → files
-    let phase = 'idle';
-    let pastSeparator = false;
+        const fileLoc = {
+            file: fileRel,
+            line: typeof d.line === 'number' ? d.line : 0
+        };
 
-    // ── Regex patterns matching actual react-doctor verbose format ──
-    // Header:  "  ⚠ Bugs: useSearchParams without Suspense"  or with "×2"
-    const headerRe = /^\s*[⚠✖]\s+([^:]+?):\s*(.+?)(?:\s*×(\d+))?\s*$/;
-    // Learn more URL
-    const learnMoreRe = /^\s*Learn more:\s*(https?:\/\/\S+)/;
-    // Solution start:  "    → Wrap the component..."
-    const solutionRe = /^\s*→\s*(.+)/;
-    // File location:   "    app/login/page.tsx:16"  or  "    src/actions/getNavData.ts"
-    const fileLocRe = /^\s{4,}([\w@./-]+\.\w{1,10})(?::(\d+))?\s*$/;
-    // Separator line:  "  ────────────────────────"
-    const separatorRe = /^\s*[─━]{4,}/;
-    // Score:  "81 / 100 Needs work"
-    const scoreRe = /(\d{1,3})\s*\/\s*100/;
-
-    for (const line of lines) {
-        const trimmed = line.trim();
-
-        // ── Separator ends all diagnostic blocks ──
-        if (separatorRe.test(trimmed)) {
-            if (current) {
-                groups.push(current);
-                current = null;
+        if (!ruleGroups.has(ruleKey)) {
+            ruleGroups.set(ruleKey, {
+                severity: (d.severity === 'error' || d.severity === 'warning') ? d.severity : 'warning',
+                category: d.category || 'General',
+                rule: d.title || d.rule || 'React Best Practices',
+                count: 1,
+                message: d.message || 'Potential improvement identified in code structure.',
+                solution: d.help || '',
+                learnMore: d.url || '',
+                files: [fileLoc]
+            });
+        } else {
+            const group = ruleGroups.get(ruleKey);
+            group.count += 1;
+            // Avoid duplicate file+line combinations in the affected files list
+            if (!group.files.some(f => f.file === fileLoc.file && f.line === fileLoc.line)) {
+                group.files.push(fileLoc);
             }
-            pastSeparator = true;
-            phase = 'idle';
-            continue;
-        }
-
-        // ── Score extraction (usually in the summary section after separator) ──
-        if (score === null && scoreRe.test(trimmed)) {
-            score = parseInt(trimmed.match(scoreRe)[1], 10);
-            continue;
-        }
-
-        // Skip everything after the separator (summary lines, ASCII art, etc.)
-        if (pastSeparator) continue;
-
-        // ── New diagnostic group header ──
-        const headerMatch = trimmed.match(headerRe);
-        if (headerMatch) {
-            // Flush any previous group
-            if (current) groups.push(current);
-            current = {
-                severity: line.includes('✖') ? 'error' : 'warning',
-                category: headerMatch[1].trim(),
-                rule: headerMatch[2].trim(),
-                count: headerMatch[3] ? parseInt(headerMatch[3], 10) : 1,
-                learnMore: '',
-                message: '',
-                solution: '',
-                files: [],
-            };
-            phase = 'meta';
-            continue;
-        }
-
-        // Everything below requires an active group
-        if (!current) continue;
-
-        // ── Blank line handling ──
-        if (!trimmed) {
-            // After solution text, blank line transitions us to file-locations phase
-            if (phase === 'solution') {
-                phase = 'files';
-            }
-            continue;
-        }
-
-        // ── Learn more URL (appears right after header) ──
-        if (phase === 'meta') {
-            const lmMatch = trimmed.match(learnMoreRe);
-            if (lmMatch) {
-                current.learnMore = lmMatch[1];
-                phase = 'description';
-                continue;
-            }
-            // No "Learn more" line — fall through to description
-            phase = 'description';
-        }
-
-        // ── Solution start (→ line) ──
-        const solMatch = line.match(solutionRe);
-        if (solMatch) {
-            current.solution = solMatch[1].trim();
-            phase = 'solution';
-            continue;
-        }
-
-        // ── Solution continuation (indented lines after →) ──
-        if (phase === 'solution') {
-            current.solution += ' ' + trimmed;
-            continue;
-        }
-
-        // ── File locations (after solution + blank line) ──
-        if (phase === 'files') {
-            const fileMatch = line.match(fileLocRe);
-            if (fileMatch) {
-                current.files.push({
-                    file: fileMatch[1],
-                    line: fileMatch[2] ? parseInt(fileMatch[2], 10) : 0,
-                });
-            }
-            continue;
-        }
-
-        // ── Description text (multi-line, before → line) ──
-        if (phase === 'description') {
-            current.message += (current.message ? ' ' : '') + trimmed;
-            continue;
         }
     }
 
-    // Flush last group
-    if (current) groups.push(current);
-
-    // ── Build final diagnostics array (one entry per rule group) ──
-    const diagnostics = groups.map((g, i) => ({
+    const diagnostics = Array.from(ruleGroups.values()).map((g, i) => ({
         id: `diag-${i + 1}`,
-        severity: g.severity,
-        category: g.category,
-        rule: g.rule,
-        count: g.count,
-        message: g.message,
-        solution: g.solution,
-        learnMore: g.learnMore,
-        files: g.files,
+        ...g
     }));
 
-    // ── 2. Score Fallback Logic ──
-    if (score === null || isNaN(score)) {
-        if (diagnostics.length === 0) {
-            score = 100;
-        } else {
-            score = 0;
-        }
-    } else if (diagnostics.length === 0 && score === 0) {
-        score = 100;
+    // Extract score number from result
+    let score = null;
+    if (result.score && typeof result.score.score === 'number') {
+        score = result.score.score;
+    } else if (typeof result.score === 'number') {
+        score = result.score;
     }
 
-    // Fallback: if we got nothing useful, return raw text for debugging
-    if (diagnostics.length === 0 && score === 0) {
-        console.log("Warning: Verbose parser yielded no diagnostics. Returning raw text.");
-        return { score: 0, diagnostics: [], rawText: raw };
+    // ── Resilient Score Fallback Logic ──
+    if (score === null || isNaN(score)) {
+        score = diagnostics.length === 0 ? 100 : 0;
+    } else if (diagnostics.length === 0 && score === 0) {
+        score = 100;
     }
 
     return { score, diagnostics };
