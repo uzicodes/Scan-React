@@ -73,8 +73,8 @@ app.post('/api/scan', async (req, res) => {
 
         let rawOutput = "";
         try {
-            // Run the tool in verbose mode for score + solutions with V8 memory constraints
-            const { stdout } = await execPromise(`cross-env NODE_OPTIONS="--max-old-space-size=250" npx --no-install react-doctor@latest --verbose`, { cwd: targetDir });
+            // Run the tool in verbose mode for score + solutions with V8 memory constraints and 50MB maxBuffer
+            const { stdout } = await execPromise(`cross-env NODE_OPTIONS="--max-old-space-size=250" npx --no-install react-doctor@latest --verbose`, { cwd: targetDir, maxBuffer: 1024 * 1024 * 50 });
             rawOutput = stdout;
         } catch (linterError) {
             // If react-doctor finds errors, it exits with a non-zero code.
