@@ -51,6 +51,7 @@ function ScoreRing({ score }: { score: number }) {
     const offset = circumference - (score / 100) * circumference;
 
     const getColor = (s: number) => {
+        if (s === 100) return { ring: '#10b981', glow: 'rgba(16, 185, 129, 0.3)', text: 'text-green-400', label: 'Compiler Ready' };
         if (s >= 90) return { ring: '#10b981', glow: 'rgba(16, 185, 129, 0.25)', text: 'text-emerald-400', label: 'Excellent' };
         if (s >= 70) return { ring: '#f59e0b', glow: 'rgba(245, 158, 11, 0.25)', text: 'text-amber-400', label: 'Needs Work' };
         return { ring: '#f43f5e', glow: 'rgba(244, 63, 94, 0.25)', text: 'text-rose-400', label: 'Critical' };
@@ -247,7 +248,10 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
 
     if (!data) return null;
 
-    const score = typeof data.score === 'number' ? data.score : 0;
+    // ── UI Sanity Check: Force score to 100 if there are 0 diagnostics ──
+    const rawScore = typeof data.score === 'number' ? data.score : 0;
+    const score = normalizedDiagnostics.length === 0 ? 100 : rawScore;
+
     const errors = normalizedDiagnostics.filter(d => d.severity === 'error');
     const warnings = normalizedDiagnostics.filter(d => d.severity === 'warning');
 
@@ -261,7 +265,11 @@ export default function ScanResults({ data }: { data: ScanData | null }) {
         <div className="w-full max-w-5xl mx-auto mt-12 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
             {/* ═══════════════════ 1. Hero Scorecard ═══════════════════ */}
-            <section className="bg-zinc-950 border border-zinc-800/80 rounded-2xl p-5 sm:p-6 md:p-7 shadow-2xl shadow-indigo-500/5">
+            <section className={`bg-zinc-950 border rounded-2xl p-5 sm:p-6 md:p-7 shadow-2xl transition-all duration-300 ${
+                normalizedDiagnostics.length === 0
+                    ? 'border-green-500/30 shadow-green-500/10 bg-gradient-to-b from-green-950/20 to-zinc-950'
+                    : 'border-zinc-800/80 shadow-indigo-500/5'
+            }`}>
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8">
                     {/* Score Ring */}
                     <div className="flex flex-col items-center gap-2 shrink-0">

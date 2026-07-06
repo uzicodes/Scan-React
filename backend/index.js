@@ -143,7 +143,13 @@ function parseVerboseOutput(raw) {
     const clean = raw.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '');
     const lines = clean.split('\n');
 
-    let score = 0;
+    // ── 1. Regex Hardening: Check entire output for score format first ──
+    let score = null;
+    const scoreMatch = clean.match(/(\d{1,3})\s*\/\s*100/);
+    if (scoreMatch) {
+        score = parseInt(scoreMatch[1], 10);
+    }
+
     const groups = [];
     let current = null;
 
@@ -181,7 +187,7 @@ function parseVerboseOutput(raw) {
         }
 
         // ── Score extraction (usually in the summary section after separator) ──
-        if (scoreRe.test(trimmed)) {
+        if (score === null && scoreRe.test(trimmed)) {
             score = parseInt(trimmed.match(scoreRe)[1], 10);
             continue;
         }
@@ -280,6 +286,17 @@ function parseVerboseOutput(raw) {
         learnMore: g.learnMore,
         files: g.files,
     }));
+
+    // ── 2. Score Fallback Logic ──
+    if (score === null || isNaN(score)) {
+        if (diagnostics.length === 0) {
+            score = 100;
+        } else {
+            score = 0;
+        }
+    } else if (diagnostics.length === 0 && score === 0) {
+        score = 100;
+    }
 
     // Fallback: if we got nothing useful, return raw text for debugging
     if (diagnostics.length === 0 && score === 0) {
