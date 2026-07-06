@@ -23,6 +23,37 @@ app.post('/api/scan', async (req, res) => {
         return res.status(400).json({ error: 'Please provide a valid public GitHub URL.' });
     }
 
+    // --- 1. GitHub API Size Gate (Pre-flight Check) ---
+    const match = githubUrl.match(/github\.com\/([^/]+)\/([^/]+)/i);
+    if (!match) {
+        return res.status(400).json({ error: 'Please provide a valid public GitHub repository URL.' });
+    }
+    const owner = match[1];
+    const repo = match[2].replace(/\.git$/i, '');
+
+    try {
+        console.log(`[Pre-flight Check] Checking repository size for ${owner}/${repo}...`);
+        const apiRes = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
+            headers: {
+                'User-Agent': 'ScanReact-Execution-Engine',
+                'Accept': 'application/vnd.github.v3+json'
+            }
+        });
+
+        if (apiRes.ok) {
+            const repoData = await apiRes.json();
+            console.log(`[Pre-flight Check] Repository size: ${repoData.size} KB (~${(repoData.size / 1024).toFixed(2)} MB)`);
+            if (repoData.size > 50000) {
+                console.log(`[Pre-flight Check] Aborted: Repository size (${repoData.size} KB) exceeds 50,000 KB limit.`);
+                return res.status(400).json({ error: 'Repository is too large for the free-tier analysis engine (Max 50MB).' });
+            }
+        } else {
+            console.warn(`[Pre-flight Check] GitHub API returned status ${apiRes.status}. Proceeding with clone...`);
+        }
+    } catch (apiError) {
+        console.warn(`[Pre-flight Check] Failed to query GitHub API (${apiError.message}). Proceeding with clone...`);
+    }
+
     // Create a dedicated temp-scans folder inside the backend directory
     const tempScansDir = path.join(__dirname, 'temp-scans');
     if (!fs.existsSync(tempScansDir)) {
@@ -42,8 +73,8 @@ app.post('/api/scan', async (req, res) => {
 
         let rawOutput = "";
         try {
-            // Run the tool in verbose mode for score + solutions
-            const { stdout } = await execPromise(`npx --no-install react-doctor --verbose`, { cwd: targetDir });
+            // Run the tool in verbose mode for score + solutions with V8 memory constraints
+            const { stdout } = await execPromise(`cross-env NODE_OPTIONS="--max-old-space-size=250" npx --no-install react-doctor@latest --verbose`, { cwd: targetDir });
             rawOutput = stdout;
         } catch (linterError) {
             // If react-doctor finds errors, it exits with a non-zero code.
