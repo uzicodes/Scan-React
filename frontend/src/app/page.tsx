@@ -1,19 +1,19 @@
 'use client';
 
-import React, { useReducer } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import { Zap, Shield, Cpu, Bug, CheckCircle2 } from 'lucide-react';
+import { Zap, Shield, Cpu } from 'lucide-react';
 import ScanForm from './components/ScanForm';
 import FeatureCard from './components/FeatureCard';
 import Pipeline from './components/Pipeline';
+import BugReportForm from './components/BugReportForm';
 
 const features = [
   {
     icon: Zap,
     title: 'Instant Diagnostics',
     description:
-      'Get a comprehensive code quality report in seconds. No local setup, no CLI to install.',
+      'Comprehensive code quality report with No local setup or CLI required.',
   },
   {
     icon: Cpu,
@@ -25,7 +25,7 @@ const features = [
     icon: Shield,
     title: 'Security Focused',
     description:
-      'Fully stateless analysis with zero code storage. Your source code is never persisted — privacy by design.',
+      'Stateless analysis with zero code storage. Your code is never persisted.',
   },
 ] as const;
 
@@ -35,54 +35,9 @@ export default function Home() {
   const handleScan = (githubUrl: string) => {
     try {
       sessionStorage.removeItem(`scan_result_${githubUrl}`);
-    } catch (e) {}
+    } catch (e) { }
     const encoded = encodeURIComponent(githubUrl);
     router.push(`/report?url=${encoded}`);
-  };
-
-  // Bug Report Form States
-  const [bugState, setBugState] = useReducer(
-    (state: any, action: any) => ({ ...state, ...action }),
-    { email: "", details: "", isSubmitting: false, success: false }
-  );
-
-  const handleBugSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!bugState.details.trim()) return;
-    setBugState({ isSubmitting: true });
-
-    try {
-      const response = await fetch("https://api.web3forms.com/submit", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          // Best practice: Store this in your .env.local file for public repos
-          access_key: process.env.NEXT_PUBLIC_WEB3FORMS_KEY || "YOUR_ACCESS_KEY",
-          subject: "🚨 New Bug Report - ScanReact",
-          from_name: "ScanReact Bug Tracker",
-          email: bugState.email || "No email provided",
-          message: bugState.details,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        setBugState({ success: true, email: "", details: "" });
-        setTimeout(() => setBugState({ success: false }), 3000);
-      } else {
-        console.error("Submission failed", result);
-        alert("Failed to send report. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error sending bug report:", error);
-      alert("An error occurred while sending the report.");
-    } finally {
-      setBugState({ isSubmitting: false });
-    }
   };
 
   return (
@@ -94,7 +49,7 @@ export default function Home() {
       {/* ---- Hero Section ---- */}
       <section
         id="hero-section"
-        className="relative z-10 flex flex-col items-center w-full max-w-5xl mx-auto px-6 pt-8 pb-20 sm:pt-12 sm:pb-28"
+        className="relative z-10 flex flex-col items-center w-full max-w-5xl mx-auto px-6 pt-8 pb-4 sm:pt-12 sm:pb-6"
       >
         {/* Badge */}
         <div className="animate-fade-in-up mb-6 sm:mb-8">
@@ -150,7 +105,7 @@ export default function Home() {
       {/* ---- Features Grid ---- */}
       <section
         id="features-section"
-        className="relative z-10 w-full max-w-5xl mx-auto px-6 py-20 sm:py-28"
+        className="relative z-10 w-full max-w-5xl mx-auto px-6 pt-10 pb-20 sm:pt-12 sm:pb-28"
       >
         <div className="text-center mb-14 animate-fade-in-up-delay-3">
           <h2 className="text-2xl sm:text-3xl font-bold text-[#74cc00] mb-3">
@@ -179,53 +134,7 @@ export default function Home() {
       </section>
 
       {/* ---- Bug Report Form ---- */}
-      <section className="relative z-10 w-full max-w-5xl mx-auto px-6">
-        <div className="max-w-lg mx-auto w-full pt-8 pb-8 text-left">
-          <div className="p-6 sm:p-8 rounded-2xl bg-zinc-900/40 border border-zinc-800/50 backdrop-blur-md">
-            <div className="flex items-center gap-3 mb-6">
-              <Bug className="w-6 h-6 text-zinc-300" />
-              <div>
-                <h3 className="font-semibold text-indigo-400 text-xl">Spotted a bug?</h3>
-                <p className="text-sm text-zinc-400 mt-1">Let me know so I can patch it.</p>
-              </div>
-            </div>
-
-            {bugState.success ? (
-              <div className="py-8 text-center text-indigo-400 animate-in fade-in">
-                <CheckCircle2 className="w-12 h-12 mx-auto mb-3" />
-                <p>Submitted successfully! Thank you.</p>
-              </div>
-            ) : (
-              <form onSubmit={handleBugSubmit} className="space-y-4">
-                <input
-                  type="email"
-                  value={bugState.email}
-                  onChange={(e) => setBugState({ email: e.target.value })}
-                  placeholder="Your Email (optional)"
-                  aria-label="Email address"
-                  className="w-full bg-zinc-950/50 border border-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 transition-colors"
-                />
-                <textarea
-                  value={bugState.details}
-                  onChange={(e) => setBugState({ details: e.target.value })}
-                  placeholder="Describe the issue or error you encountered..."
-                  aria-label="Bug details"
-                  required
-                  rows={3}
-                  className="w-full bg-zinc-950/50 border border-zinc-800 rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:border-indigo-500 transition-colors"
-                />
-                <button
-                  type="submit"
-                  disabled={bugState.isSubmitting}
-                  className="w-full px-6 py-3 bg-zinc-100 hover:bg-white text-zinc-900 rounded-xl font-medium text-sm transition-colors disabled:opacity-50"
-                >
-                  {bugState.isSubmitting ? "Submitting..." : "Submit Report"}
-                </button>
-              </form>
-            )}
-          </div>
-        </div>
-      </section>
+      <BugReportForm />
 
       {/* ---- Footer ---- */}
       <footer
