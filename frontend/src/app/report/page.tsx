@@ -185,6 +185,32 @@ function ErrorCard({ message }: { message: string }) {
 
 /* ──────────────────────────── Report Content (reads searchParams) ── */
 
+/* ──────────────────────────── API Helper ──────────────────────────── */
+
+async function fetchScanReport(githubUrl: string): Promise<ScanData> {
+  const response = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/scan`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ githubUrl }),
+    }
+  );
+
+  if (!response.ok) {
+    let errJson: any = {};
+    try {
+      errJson = await response.json();
+    } catch { }
+    throw new Error(
+      errJson.error || `Server responded with status ${response.status}`
+    );
+  }
+
+  const result = await response.json();
+  return result.data || result;
+}
+
 function ReportContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -217,39 +243,22 @@ function ReportContent() {
     setScanData(null);
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/scan`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ githubUrl }),
-        }
-      );
-
-      if (!response.ok) {
-        const errJson = await response.json().catch(() => ({}));
-        throw new Error(
-          errJson.error || `Server responded with status ${response.status}`
-        );
-      }
-
-      const result = await response.json();
-      const parsed: ScanData = result.data || result;
+      const parsed = await fetchScanReport(githubUrl);
       setScanData(parsed);
       try {
         sessionStorage.setItem(`scan_result_${githubUrl}`, JSON.stringify(parsed));
       } catch (e) {
         console.warn('Failed to cache scan result in sessionStorage:', e);
       }
-      setIsLoading(false);
     } catch (err: unknown) {
       const message =
         err instanceof Error
           ? err.message
           : 'Unable to reach the analysis server. Is the backend running?';
       setError(message);
-      setIsLoading(false);
     }
+
+    setIsLoading(false);
   };
 
   // Kick off the scan as soon as the page loads (or restore from sessionStorage on refresh)

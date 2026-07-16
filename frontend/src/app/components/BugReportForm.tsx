@@ -79,9 +79,9 @@ export default function BugReportForm() {
     } catch (error) {
       console.error("Error sending bug report:", error);
       alert("An error occurred while sending the report.");
-    } finally {
-      setBugState({ isSubmitting: false });
     }
+
+    setBugState({ isSubmitting: false });
   };
 
   return (
