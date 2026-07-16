@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Zap, Shield, Cpu } from 'lucide-react';
@@ -7,6 +8,7 @@ import ScanForm from './components/ScanForm';
 import FeatureCard from './components/FeatureCard';
 import Pipeline from './components/Pipeline';
 import BugReportForm from './components/BugReportForm';
+import Loader from './components/Loader';
 
 const features = [
   {
@@ -31,6 +33,44 @@ const features = [
 
 export default function Home() {
   const router = useRouter();
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [fadeOut, setFadeOut] = useState(false);
+
+  useEffect(() => {
+    // Check if already shown in this browser session
+    try {
+      const hasShown = sessionStorage.getItem('scanreact_intro_shown');
+      if (hasShown) {
+        setIsInitialLoading(false);
+        return;
+      }
+    } catch (e) { }
+
+    const dismissLoader = () => {
+      setFadeOut(true);
+      try {
+        sessionStorage.setItem('scanreact_intro_shown', 'true');
+      } catch (e) { }
+      setTimeout(() => {
+        setIsInitialLoading(false);
+      }, 700); // match transition duration
+    };
+
+    // Ensure minimum display time (e.g. 1300ms) so the splash loader feels intentional and premium,
+    // combined with waiting for full page/document load if not already complete.
+    const minTimePromise = new Promise((resolve) => setTimeout(resolve, 1300));
+    const loadPromise = new Promise((resolve) => {
+      if (document.readyState === 'complete') {
+        resolve(true);
+      } else {
+        window.addEventListener('load', () => resolve(true), { once: true });
+      }
+    });
+
+    Promise.all([minTimePromise, loadPromise]).then(() => {
+      dismissLoader();
+    });
+  }, []);
 
   const handleScan = (githubUrl: string) => {
     try {
@@ -42,6 +82,22 @@ export default function Home() {
 
   return (
     <main className="relative flex flex-col items-center min-h-screen overflow-hidden">
+      {/* ---- First-Visit Full-Screen Splash Loader ---- */}
+      {isInitialLoading && (
+        <div
+          className={`fixed inset-0 z-50 flex flex-col items-center justify-center bg-zinc-950/95 backdrop-blur-2xl transition-opacity duration-700 ease-in-out ${fadeOut ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            }`}
+        >
+          <div className="absolute inset-0 bg-grid-pattern pointer-events-none opacity-40" />
+          <div className="absolute inset-0 bg-radial-glow pointer-events-none opacity-80" />
+          <Loader
+            size="xl"
+            text="Scan-React Engine…"
+            className="relative z-10 animate-fade-in-up"
+          />
+        </div>
+      )}
+
       {/* ---- Background layers ---- */}
       <div className="fixed inset-0 bg-grid-pattern pointer-events-none" />
       <div className="fixed inset-0 bg-radial-glow pointer-events-none" />

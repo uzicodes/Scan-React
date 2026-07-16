@@ -12,6 +12,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import ScanResults, { type ScanData } from '../components/ScanResults';
+import Loader from '../components/Loader';
 
 /* ──────────────────────────── Types ──────────────────────────── */
 
@@ -84,6 +85,11 @@ function TerminalLoader({ repoUrl }: { repoUrl: string }) {
 
   return (
     <div className="w-full max-w-3xl mx-auto animate-fade-in-up">
+      {/* Hero Logo Loader */}
+      <div className="flex flex-col items-center justify-center mb-8">
+        <Loader size="lg" text={`${phaseLabel[phase]}${dots}`} />
+      </div>
+
       {/* Terminal window */}
       <div className="bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl shadow-violet-500/5">
         {/* Title bar */}
@@ -116,8 +122,8 @@ function TerminalLoader({ repoUrl }: { repoUrl: string }) {
           ))}
 
           {/* Blinking cursor line */}
-          <div className="flex items-center gap-2 mt-2">
-            <Loader2 size={14} className="text-violet-400 animate-spin-slow" />
+          <div className="flex items-center gap-2.5 mt-3 pt-2 border-t border-zinc-800/60">
+            <Loader size="sm" />
             <span className="text-zinc-400">
               {phaseLabel[phase]}{dots}
             </span>
@@ -325,8 +331,7 @@ export default function ReportPage() {
         <Suspense
           fallback={
             <div className="flex items-center justify-center py-32">
-              <Terminal className="w-6 h-6 text-violet-400 animate-pulse" />
-              <span className="ml-3 text-sm text-zinc-500">Loading…</span>
+              <Loader size="lg" text="Loading diagnostics…" />
             </div>
           }
         >

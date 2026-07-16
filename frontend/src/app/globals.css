@@ -144,6 +144,11 @@ input:-webkit-autofill:active {
   to { transform: rotate(360deg); }
 }
 
+@keyframes spin-reverse {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+
 @keyframes score-ring {
   from { stroke-dashoffset: var(--ring-circumference, 565); }
   to { stroke-dashoffset: var(--ring-offset, 0); }
@@ -196,6 +201,10 @@ input:-webkit-autofill:active {
 
 .animate-spin-slow {
   animation: spin-slow 1.2s linear infinite;
+}
+
+.animate-spin-reverse {
+  animation: spin-reverse 1.8s linear infinite;
 }
 
 /* ---- Gradient text ---- */

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Search, Loader2 } from 'lucide-react';
+import Loader from './Loader';
 
 interface ScanFormProps {
   isLoading?: boolean;
@@ -84,7 +85,7 @@ export default function ScanForm({ isLoading = false, onScan }: ScanFormProps) {
         >
           {isLoading ? (
             <>
-              <Loader2 size={16} className="animate-spin-slow" />
+              <Loader size="sm" />
               <span>Analyzing…</span>
             </>
           ) : (
