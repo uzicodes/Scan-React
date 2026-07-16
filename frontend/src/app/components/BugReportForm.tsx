@@ -14,7 +14,6 @@ export default function BugReportForm() {
     let val = e.target.value;
     const firstAt = val.indexOf('@');
     if (firstAt !== -1) {
-      // Keep everything up to the first '@', and strip any subsequent '@' characters from the rest
       const beforeAt = val.slice(0, firstAt + 1);
       const afterAt = val.slice(firstAt + 1).replace(/@/g, '');
       val = beforeAt + afterAt;
@@ -32,14 +31,14 @@ export default function BugReportForm() {
     e.preventDefault();
     setBugState({ error: "" });
 
-    // 1. Validate email: must have at least one '@' and ONLY one '@'
+    // Validate email: must have at least one '@' and max one
     const atCount = (bugState.email.match(/@/g) || []).length;
     if (atCount !== 1) {
       setBugState({ error: "Please enter a valid email address containing exactly one '@' symbol." });
       return;
     }
 
-    // 2. Validate message details
+    // Validate message details
     if (!bugState.details.trim()) {
       setBugState({ error: "Please describe the issue before submitting." });
       return;
@@ -90,7 +89,7 @@ export default function BugReportForm() {
         <div className="p-6 sm:p-8 rounded-2xl bg-zinc-900/40 border border-zinc-800/50 backdrop-blur-md">
           <div className="flex flex-col items-center text-center mb-6">
             <Bug className="w-8 h-8 text-green-400 mb-2" />
-            <h3 className="font-semibold text-indigo-400 text-xl">Spotted a bug?</h3>
+            <h3 className="font-semibold text-indigo-400 text-xl">Spotted a Bug?</h3>
             <p className="text-sm text-zinc-400 mt-1">Let me know so I can patch it.</p>
           </div>
 

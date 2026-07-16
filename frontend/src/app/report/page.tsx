@@ -41,7 +41,7 @@ function TerminalLoader({ repoUrl }: { repoUrl: string }) {
     return () => clearInterval(id);
   }, []);
 
-  // Cycle through phases to give the user a sense of progress
+
   useEffect(() => {
     const t1 = setTimeout(() => {
       setLines((prev) => [
@@ -50,7 +50,7 @@ function TerminalLoader({ repoUrl }: { repoUrl: string }) {
       ]);
     }, 600);
 
-    // Phase 2 — after 3 s
+
     const t2 = setTimeout(() => {
       setPhase('analyzing');
       setLines((prev) => [
@@ -60,7 +60,7 @@ function TerminalLoader({ repoUrl }: { repoUrl: string }) {
       ]);
     }, 3000);
 
-    // Phase 3 — after 7 s
+
     const t3 = setTimeout(() => {
       setPhase('finalizing');
       setLines((prev) => [
@@ -109,13 +109,12 @@ function TerminalLoader({ repoUrl }: { repoUrl: string }) {
           {lines.map((line) => (
             <div
               key={line.text}
-              className={`animate-fade-in-up ${
-                line.type === 'success'
-                  ? 'text-emerald-400'
-                  : line.type === 'dimmed'
-                    ? 'text-zinc-600'
-                    : 'text-violet-300'
-              }`}
+              className={`animate-fade-in-up ${line.type === 'success'
+                ? 'text-emerald-400'
+                : line.type === 'dimmed'
+                  ? 'text-zinc-600'
+                  : 'text-violet-300'
+                }`}
             >
               {line.text}
             </div>
@@ -171,7 +170,7 @@ function ErrorCard({ message }: { message: string }) {
         <Link
           href="/"
           onClick={() => {
-            try { sessionStorage.clear(); } catch (e) {}
+            try { sessionStorage.clear(); } catch (e) { }
           }}
           className="inline-flex items-center gap-2 px-6 py-3 bg-violet-600 hover:bg-violet-500 text-white text-sm font-semibold rounded-xl transition-all duration-300 shadow-lg shadow-violet-600/20 hover:shadow-violet-500/30 active:scale-[0.97]"
         >
@@ -183,7 +182,7 @@ function ErrorCard({ message }: { message: string }) {
   );
 }
 
-/* ──────────────────────────── Report Content (reads searchParams) ── */
+/* ──────────────────────────── Report Content  ─────────────────────── */
 
 /* ──────────────────────────── API Helper ──────────────────────────── */
 
@@ -261,7 +260,7 @@ function ReportContent() {
     setIsLoading(false);
   };
 
-  // Kick off the scan as soon as the page loads (or restore from sessionStorage on refresh)
+  // scan starts as soon as the page loads (or restore from sessionStorage on refresh)
   const hasFetched = useRef(false);
   useEffect(() => {
     if (hasFetched.current) return;
@@ -289,7 +288,7 @@ function ReportContent() {
         <Link
           href="/"
           onClick={() => {
-            try { sessionStorage.removeItem(`scan_result_${repoUrl}`); } catch (e) {}
+            try { sessionStorage.removeItem(`scan_result_${repoUrl}`); } catch (e) { }
           }}
           className="inline-flex items-center gap-1.5 text-xs text-zinc-500 hover:text-zinc-300 transition-colors mb-4"
         >

@@ -43,6 +43,13 @@ export interface ScanData {
 
 /* ──────────────────────────── Score Ring ──────────────────────────── */
 
+function getScoreColor(s: number) {
+    if (s === 100) return { ring: '#10b981', glow: 'rgba(16, 185, 129, 0.3)', text: 'text-green-400', label: 'Compiler Ready' };
+    if (s >= 90) return { ring: '#10b981', glow: 'rgba(16, 185, 129, 0.25)', text: 'text-emerald-400', label: 'Excellent' };
+    if (s >= 70) return { ring: '#f59e0b', glow: 'rgba(245, 158, 11, 0.25)', text: 'text-amber-400', label: 'Needs Work' };
+    return { ring: '#f43f5e', glow: 'rgba(244, 63, 94, 0.25)', text: 'text-rose-400', label: 'Critical' };
+}
+
 function ScoreRing({ score }: { score: number }) {
     const radius = 58;
     const stroke = 8;
@@ -50,14 +57,7 @@ function ScoreRing({ score }: { score: number }) {
     const circumference = 2 * Math.PI * normalizedRadius;
     const offset = circumference - (score / 100) * circumference;
 
-    const getColor = (s: number) => {
-        if (s === 100) return { ring: '#10b981', glow: 'rgba(16, 185, 129, 0.3)', text: 'text-green-400', label: 'Compiler Ready' };
-        if (s >= 90) return { ring: '#10b981', glow: 'rgba(16, 185, 129, 0.25)', text: 'text-emerald-400', label: 'Excellent' };
-        if (s >= 70) return { ring: '#f59e0b', glow: 'rgba(245, 158, 11, 0.25)', text: 'text-amber-400', label: 'Needs Work' };
-        return { ring: '#f43f5e', glow: 'rgba(244, 63, 94, 0.25)', text: 'text-rose-400', label: 'Critical' };
-    };
-
-    const color = getColor(score);
+    const color = getScoreColor(score);
 
     return (
         <div className="relative flex items-center justify-center" style={{ width: radius * 2, height: radius * 2 }}>
