@@ -33,44 +33,64 @@ const features = [
 
 export default function Home() {
   const router = useRouter();
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [isInitialLoading, setIsInitialLoading] = useState(() => {
+    if (typeof window === 'undefined') return true;
+    try {
+      return sessionStorage.getItem('scanreact_intro_shown') !== 'true';
+    } catch {
+      return true;
+    }
+  });
   const [fadeOut, setFadeOut] = useState(false);
 
   useEffect(() => {
-    // Check if already shown in this browser session
-    try {
-      const hasShown = sessionStorage.getItem('scanreact_intro_shown');
-      if (hasShown) {
-        setIsInitialLoading(false);
-        return;
-      }
-    } catch (e) { }
+    if (!isInitialLoading) return;
 
-    const dismissLoader = () => {
+    let isMounted = true;
+    let transitionTimerId: NodeJS.Timeout | null = null;
+    let minDisplayTimerId: NodeJS.Timeout | null = null;
+
+    let isWindowLoaded = typeof document !== 'undefined' && document.readyState === 'complete';
+    let isMinTimeElapsed = false;
+
+    const checkDismiss = () => {
+      if (!isMounted || !isWindowLoaded || !isMinTimeElapsed) return;
+
       setFadeOut(true);
       try {
         sessionStorage.setItem('scanreact_intro_shown', 'true');
       } catch (e) { }
-      setTimeout(() => {
-        setIsInitialLoading(false);
+
+      transitionTimerId = setTimeout(() => {
+        if (isMounted) {
+          setIsInitialLoading(false);
+        }
       }, 700); // match transition duration
     };
 
-    // Ensure minimum display time (e.g. 1300ms) so the splash loader feels intentional and premium,
-    // combined with waiting for full page/document load if not already complete.
-    const minTimePromise = new Promise((resolve) => setTimeout(resolve, 1300));
-    const loadPromise = new Promise((resolve) => {
-      if (document.readyState === 'complete') {
-        resolve(true);
-      } else {
-        window.addEventListener('load', () => resolve(true), { once: true });
-      }
-    });
+    const handleWindowLoad = () => {
+      isWindowLoaded = true;
+      checkDismiss();
+    };
 
-    Promise.all([minTimePromise, loadPromise]).then(() => {
-      dismissLoader();
-    });
-  }, []);
+    if (!isWindowLoaded && typeof window !== 'undefined') {
+      window.addEventListener('load', handleWindowLoad, { once: true });
+    }
+
+    minDisplayTimerId = setTimeout(() => {
+      isMinTimeElapsed = true;
+      checkDismiss();
+    }, 1300);
+
+    return () => {
+      isMounted = false;
+      if (minDisplayTimerId) clearTimeout(minDisplayTimerId);
+      if (transitionTimerId) clearTimeout(transitionTimerId);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('load', handleWindowLoad);
+      }
+    };
+  }, [isInitialLoading]);
 
   const handleScan = (githubUrl: string) => {
     try {
