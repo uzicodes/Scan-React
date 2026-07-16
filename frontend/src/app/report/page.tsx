@@ -122,8 +122,8 @@ function TerminalLoader({ repoUrl }: { repoUrl: string }) {
           ))}
 
           {/* Blinking cursor line */}
-          <div className="flex items-center gap-2.5 mt-3 pt-2 border-t border-zinc-800/60">
-            <Loader size="sm" />
+          <div className="flex items-center gap-2 mt-2">
+            <Loader2 size={14} className="text-violet-400 animate-spin-slow" />
             <span className="text-zinc-400">
               {phaseLabel[phase]}{dots}
             </span>

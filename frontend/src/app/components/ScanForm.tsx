@@ -47,8 +47,8 @@ export default function ScanForm({ isLoading = false, onScan }: ScanFormProps) {
         }`}
       >
         <div className="flex-1 flex items-center min-w-0">
-          <div className="pl-4 text-zinc-500">
-            <Search size={20} />
+          <div className="pl-3 sm:pl-4 text-zinc-500 shrink-0">
+            <Search className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
 
           <input
@@ -65,7 +65,7 @@ export default function ScanForm({ isLoading = false, onScan }: ScanFormProps) {
             placeholder="https://github.com/owner/repository"
             disabled={isLoading}
             aria-label="GitHub repository URL"
-            className={`flex-1 min-w-0 bg-transparent placeholder:text-zinc-500 text-base py-3 px-2 outline-none disabled:opacity-50 font-mono transition-colors duration-200 ${
+            className={`flex-1 min-w-0 bg-transparent placeholder:text-zinc-500 placeholder:truncate text-xs sm:text-base py-2.5 sm:py-3 px-1.5 sm:px-2 outline-none disabled:opacity-50 font-mono transition-colors duration-200 ${
               githubUrl.trim().length > 0 ? 'text-green-400 font-medium' : 'text-zinc-100'
             }`}
           />
